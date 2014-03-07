@@ -1,6 +1,9 @@
+from __future__ import division
 import codecs
 import date
 import re
+import operator
+
 
 class Chat():
     def __init__(self, filename):
@@ -13,14 +16,13 @@ class Chat():
         self.messagelist = []
 
     def open_file(self):
-        arq = open(self.filename)
+        arq = codecs.open(self.filename, "r", "utf-8-sig")
         content = arq.read()
         arq.close()
         lines = content.split("\n")
         lines = [l for l in lines if len(l) != 1]
         for l in lines:
-            a = l.decode("utf8", "ignore")
-            self.raw_messages.append(a.encode("utf8"))
+            self.raw_messages.append(l.encode("utf-8"))
 
     def feed_lists(self):
         for l in self.raw_messages:
@@ -49,10 +51,16 @@ class Chat():
         return [e for e in senders_set]
 
     def count_messages_per_weekday(self):
-        for i in range(len(self.datelist[:10])):
+        counter = dict()
+        for i in range(len(self.datelist)):
             day, month, year = self.datelist[i].split("/")
             parsed_date = "%s-%s-%s" % (year, month, day)
-            print parsed_date, date.date_to_weekday(parsed_date)
+            weekday = date.date_to_weekday(parsed_date)
+            if weekday not in counter:
+                counter[weekday] = 1
+            else:
+                counter[weekday] += 1
+        return counter
 
     def count_messages_per_shift(self):
         shifts = {
@@ -64,13 +72,13 @@ class Chat():
         for i in range(len(self.timelist)):
             hour = int(self.timelist[i].split(":")[0])
             if hour >= 0 and hour <= 6:
-                shifts["latenight"]+=1
+                shifts["latenight"] += 1
 
             elif hour > 6 and hour <= 11:
-                shifts["morning"] +=1
+                shifts["morning"] += 1
 
             elif hour > 11 and hour <= 17:
-                shifts["afternoon"] +=1
+                shifts["afternoon"] += 1
 
             elif hour > 17 and hour <= 23:
                 shifts["evening"] += 1
@@ -84,10 +92,11 @@ class Chat():
             counters[pattern] = dict()
             for s in senders:
                 counters[pattern][s] = 0
-            pattern_dict[pattern] = re.compile(pattern, re.I)
+            pattern_dict[pattern] = re.compile(re.escape(pattern), re.I)
         for i in range(len(self.messagelist)):
             for pattern in patternlist:
-                search_result = pattern_dict[pattern].findall(self.messagelist[i])
+                search_result = pattern_dict[pattern].\
+                    findall(self.messagelist[i])
                 length = len(search_result)
                 if length > 0:
                     if pattern not in counters:
@@ -103,25 +112,66 @@ class Chat():
                 print s, ": ", pattern_dict[pattern][s]
             print ""
 
-
     def message_proportions(self):
         senders = self.get_senders()
         counter = dict()
-        for s in senders:
-            counter[s] = 0
-        for i in range(len(self.senderlist)):
-            counter[self.senderlist[i]] += 1
         total = 0
+        for i in ["messages", "words", "chars"]:
+            counter[i] = dict()
+            for s in senders:
+                counter[i][s] = 0
+        for i in range(len(self.senderlist)):
+            counter["messages"][self.senderlist[i]] += 1
+            counter["words"][self.senderlist[i]] += \
+                len(self.messagelist[i].split(" "))
+            counter["chars"][self.senderlist[i]] += len(self.messagelist[i])
+            total += 1
+        counter["total_messages"] = 0
+        counter["total_words"] = 0
+        counter["total_chars"] = 0
         for s in senders:
-            total += counter[s]
-        counter["total"] = total
+            counter["total_messages"] += counter["messages"][s]
+            counter["total_words"] += counter["words"][s]
+            counter["total_chars"] += counter["chars"][s]
         return counter
+
+    def average_message_length(self):
+        msg_prop = self.message_proportions()
+        counter = dict()
+        for s in self.get_senders():
+            counter[s] = msg_prop["words"][s] / msg_prop["messages"][s]
+        return counter
+
+    def most_used_words(self, top=10, threshold=3):
+        words = dict()
+        for i in range(len(self.messagelist)):
+            message_word = self.messagelist[i].split(" ")
+            for w in message_word:
+                if len(w) > threshold:
+                    w = w.lower()
+                    if w not in words:
+                        words[w] = 1
+                    else:
+                        words[w] += 1
+        sorted_words = sorted(words.iteritems(), key=operator.itemgetter(1),
+                              reverse=True)
+        counter = 0
+        output = sorted_words[:top]
+        return output
+
 
 def main():
     c = Chat("Moyrilia.txt")
     c.open_file()
     c.feed_lists()
-    c.print_patterns_dict(c.count_messages_pattern(['te amo', 'beijos', 'feliz', ':\)']))
+    cdict = c.count_messages_pattern(['te amo', 'desculpa', 'beijos', 'amor',
+                                      ':)', ':(', 'bom dia'])
+    c.print_patterns_dict(cdict)
     print c.message_proportions()
+    print c.count_messages_per_shift()
+    print c.count_messages_per_weekday()
+    print c.average_message_length()
+    #print c.most_used_words()
+
 
 main()
