@@ -3,6 +3,7 @@ import codecs
 import date
 import re
 import operator
+import sys
 
 
 class Chat():
@@ -161,7 +162,11 @@ class Chat():
 
 
 def main():
-    c = Chat("Moyrilia.txt")
+    if len(sys.argv) < 2:
+        print "Run: python main.py <TextFileName>"
+        sys.exit(1)
+
+    c = Chat(sys.argv[1])
     c.open_file()
     c.feed_lists()
     cdict = c.count_messages_pattern(['te amo', 'desculpa', 'beijos', 'amor',
