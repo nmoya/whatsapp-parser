@@ -4,6 +4,7 @@ import date
 import re
 import operator
 import sys
+import json
 
 
 class Chat():
@@ -165,18 +166,34 @@ def main():
     if len(sys.argv) < 2:
         print "Run: python main.py <TextFileName>"
         sys.exit(1)
-
     c = Chat(sys.argv[1])
+    #c = Chat("Moyrilia.txt")
     c.open_file()
     c.feed_lists()
-    cdict = c.count_messages_pattern(['te amo', 'desculpa', 'beijos', 'amor',
-                                      ':)', ':(', 'bom dia'])
-    c.print_patterns_dict(cdict)
+    output = dict()
+    output["patterns"] = \
+        c.count_messages_pattern(['te amo', 'desculpa', 'beijos', 'amor',
+                                 'coco', 'bom dia', 'bebe'])
+    #c.print_patterns_dict(cdict)
     print c.message_proportions()
-    print c.count_messages_per_shift()
-    print c.count_messages_per_weekday()
-    print c.average_message_length()
-    #print c.most_used_words()
+    output["proportions"] = c.message_proportions()
 
+    print c.count_messages_per_shift()
+    output["shifts"] = c.count_messages_per_shift()
+
+    print c.count_messages_per_weekday()
+    output["weekdays"] = c.count_messages_per_weekday()
+
+    print c.average_message_length()
+    output["lengths"] = c.average_message_length()
+
+    output["senders"] = c.get_senders()
+
+    print c.most_used_words(top=15, threshold=1)
+    filename = sys.argv[1].split("/")[-1]
+    print "./logs/"+filename+".json"
+    arq = open("./logs/"+filename+".json", "w")
+    arq.write(json.dumps(output))
+    arq.close()
 
 main()
