@@ -1,7 +1,7 @@
 whatsapp-parser
 ===============
 
-Parser to the What's App log file.
+Parser to the What's App log file. No more statistics will be added. Feel free to fork and modify :-)
 
 ### Dependencies ###
 - Python 2.*
