@@ -91,5 +91,3 @@ agora
 aqui
 tava
 ./logs/Chat.txt.json
-```
-

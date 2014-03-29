@@ -150,6 +150,8 @@ class Chat():
             message_word = self.messagelist[i].split(" ")
             for w in message_word:
                 if len(w) > threshold:
+                    w = w.decode("utf8")
+                    w = w.replace("\r", "")
                     w = w.lower()
                     if w not in words:
                         words[w] = 1
@@ -161,35 +163,58 @@ class Chat():
         output = sorted_words[:top]
         return output
 
+def printDict(dic, parent, depth):
+    tup = sorted(dic.iteritems(), key=operator.itemgetter(1))
+    isLeaf = True
+    for key in tup:
+        if isinstance(dic[key[0]], dict):
+            isLeaf = False
+    if isLeaf and depth!=0:
+        print " "*(depth-1)*2, parent
+    for key in tup:
+        if isinstance(dic[key[0]], dict):
+            printDict(dic[key[0]], key[0], depth+1)
+        else:
+            print " "*depth*2, str(key[0]), "->", dic[key[0]]
+
 
 def main():
     if len(sys.argv) < 2:
-        print "Run: python main.py <TextFileName>"
+        print "Run: python main.py <TextFileName> [regex. patterns]"
         sys.exit(1)
     c = Chat(sys.argv[1])
-    #c = Chat("Moyrilia.txt")
     c.open_file()
     c.feed_lists()
     output = dict()
-    output["patterns"] = \
-        c.count_messages_pattern(['te amo', 'desculpa', 'beijos', 'amor',
-                                 'coco', 'bom dia', 'bebe'])
-    #c.print_patterns_dict(cdict)
-    print c.message_proportions()
+    
+    print "\n--PROPORTIONS"
     output["proportions"] = c.message_proportions()
-
-    print c.count_messages_per_shift()
+    printDict(output["proportions"], "proportions", 0)
+    
+    print "\n--SHIFTS"
     output["shifts"] = c.count_messages_per_shift()
+    printDict(output["shifts"], "shifts", 0)
 
-    print c.count_messages_per_weekday()
+    print "\n--WEEKDAY"
     output["weekdays"] = c.count_messages_per_weekday()
+    printDict(output["weekdays"], "weekday", 0)
 
-    print c.average_message_length()
+    print "\n--AVERAGE MESSAGE LENGTH"
     output["lengths"] = c.average_message_length()
+    printDict(output["lengths"], "lengths", 0)
+
+    print "\n--PATTERNS"
+    output["patterns"] = c.count_messages_pattern(sys.argv[2:])
+    printDict(output["patterns"], "patterns", 0)
+
+    print "\n--TOP 15 MOST USED WORDS (length >= 3)"
+    output["most_used_words"] = c.most_used_words(top=15, threshold=3)
+    output["most_used_words"] = sorted(output["most_used_words"], key=operator.itemgetter(1), reverse=True)
+    #print output["most_used_words"]
+    for muw in output["most_used_words"]:
+        print muw[0]
 
     output["senders"] = c.get_senders()
-
-    print c.most_used_words(top=15, threshold=1)
     filename = sys.argv[1].split("/")[-1]
     print "./logs/"+filename+".json"
     arq = open("./logs/"+filename+".json", "w")
