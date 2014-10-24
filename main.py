@@ -177,6 +177,7 @@ def printDict(dic, parent, depth):
             print " "*depth*2, str(key[0]), "->", dic[key[0]]
 
 
+
 def main():
     if len(sys.argv) < 2:
         print "Run: python main.py <TextFileName> [regex. patterns]"

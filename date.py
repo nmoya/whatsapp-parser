@@ -81,6 +81,7 @@ def date_interval(initial_date, length, step=1, separator="-"):
 
     return output
 
+
 def weekday_portuguese_to_english(string):
     string = string.lower()
     string = string.strip()
