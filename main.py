@@ -28,18 +28,17 @@ class Chat():
 
     def feed_lists(self):
         for l in self.raw_messages:
-            search_obj = re.search(r'[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}', l)
-            if search_obj:
-                columns = l.split(": ")
-                date, time = columns[0].split(" ")
-                sender = columns[1]
-                message = columns[2]
+            msg_date, sep, msg = l.partition(": ")
+            raw_date, sep, time = msg_date.partition(" ")
+            sender, sep, message = msg.partition(": ")
+
+            if message:
+                self.datelist.append(raw_date)
+                self.timelist.append(time)
+                self.senderlist.append(sender)
+                self.messagelist.append(message)
             else:
-                message = l
-            self.datelist.append(date)
-            self.timelist.append(time)
-            self.senderlist.append(sender)
-            self.messagelist.append(message)
+                self.messagelist.append(l)
 
     def print_history(self, end=0):
         if end == 0:
