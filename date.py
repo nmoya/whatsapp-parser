@@ -66,7 +66,7 @@ def date_to_str(date):
 
 
 def date_to_weekday(date):
-    return time.strftime("%A", time.strptime(date, "%Y-%m-%d"))
+    return time.strftime("%A", time.strptime(date, "%y-%m-%d"))
 
 
 def date_interval(initial_date, length, step=1, separator="-"):
