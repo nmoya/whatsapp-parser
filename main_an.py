@@ -7,11 +7,15 @@ import operator
 import sys
 import json
 import csv
-#import numpy
+import numpy
+import matplotlib.pyplot as plt
 from pprint import pprint
 
 
+
+
 class Chat():
+
     def __init__(self, filename):
         self.filename = filename
         self.raw_messages = []
@@ -25,7 +29,8 @@ class Chat():
         self.contactResponseTimeList = []
         self.rootBurstList = []
         self.contactBurstList = []
-        #self.responseTimeList.append(0)
+        self.rootInitiations = 0
+        self.contactInitiations = 0
 
     def open_file(self):
         arq = codecs.open(self.filename, "r", "utf-8-sig")
@@ -64,12 +69,20 @@ class Chat():
 
         rootName = "ROOT"
         contactName = "CONTACT"
+        INITIATION_THRESHOLD = (8*60*60)
         
         for t1 in self.chatTimeList[1:]: #perform the operations that are dependant on multiple messages (response time, bursts)
             dt = t1-t0
             if self.senderlist[senderIndex] != self.senderlist[senderIndex-1]: #is sender the same as the last message?
                 #sender changed, store the burst count and reset 
                 print("sender changed: %s") %(self.senderlist[senderIndex])
+                if (dt.seconds > INITIATION_THRESHOLD):
+                    if self.senderlist[senderIndex] == rootName:
+                        self.rootInitiations +=1
+                    elif self.senderlist[senderIndex] == contactName:
+                        self.contactInitiations +=1
+                    else:   
+                        sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT\n")                    
                 print("response time: %d\n" %(dt.seconds) )
                 if self.senderlist[senderIndex] == rootName:    #is sender the root?
                     self.rootBurstList.append(burstCount)
@@ -173,7 +186,7 @@ class Chat():
         senders = self.get_senders()
         counter = dict()
         total = 0
-        for i in ["messages", "words", "chars", "qmarks", "media"]:
+        for i in ["messages", "words", "chars", "qmarks", "exclams", "media"]:
             counter[i] = dict()
             for s in senders:
                 counter[i][s] = 0
@@ -183,12 +196,14 @@ class Chat():
                 len(self.messagelist[i].split(" "))
             counter["chars"][self.senderlist[i]] += len(self.messagelist[i])
             counter["qmarks"][self.senderlist[i]] += self.messagelist[i].count('?')
+            counter["exclams"][self.senderlist[i]] += self.messagelist[i].count('!')
             counter["media"][self.senderlist[i]] += (self.messagelist[i].count('<media omitted>')+self.messagelist[i].count('<image omitted>')+self.messagelist[i].count('<audio omitted>'))
             total += 1
         counter["total_messages"] = 0
         counter["total_words"] = 0
         counter["total_chars"] = 0
         counter["total_qmarks"] = 0
+        counter["total_exclams"] = 0
         counter["total_media"] = 0
 
         for s in senders:
@@ -196,6 +211,7 @@ class Chat():
             counter["total_words"] += counter["words"][s]
             counter["total_chars"] += counter["chars"][s]
             counter["total_qmarks"] += counter["qmarks"][s]
+            counter["total_exclams"] += counter["exclams"][s]
             counter["total_media"] += counter["media"][s]
         return counter
 
@@ -240,15 +256,18 @@ def printDict(dic, parent, depth):
             print " "*depth*2, str(key[0]), "->", dic[key[0]]
 
 
-
-def main():
-    if len(sys.argv) < 2:
-        print "Run: python main.py <TextFileName> [regex. patterns]"
-        sys.exit(1)
-    c = Chat(sys.argv[1])
+def main(filenameAN):
+    #if len(sys.argv) < 2:
+    #    print "Run: python main.py <TextFileName> [regex. patterns]"
+    #    sys.exit(1)
+    #c = Chat(sys.argv[1])
+    c = Chat(filenameAN)
     c.open_file()
     c.feed_lists()
     output = dict()
+    RESPONSE_TIME_THRESHOLD = (3*60*60) #number hours for 'big delay' in response time (to strip out in response time calculation)
+    BURST_THRESHOLD = 3 #consider a 'burst' if someone sends 3 or more messages in a row
+
     
     print "\n--PROPORTIONS"
     output["proportions"] = c.message_proportions()
@@ -270,6 +289,84 @@ def main():
     output["patterns"] = c.count_messages_pattern(sys.argv[2:])
     printDict(output["patterns"], "patterns", 0)
 
+    print "\n--INITIATIONS"
+    print("root initiations %d" %c.rootInitiations)
+    print("contact initiations %d" %c.contactInitiations)
+    output["rootInitiations"] = c.rootInitiations
+    output["contactInitiations"] = c.contactInitiations
+    initiationRatio = c.rootInitiations/c.contactInitiations
+    output["initiationRatio"] = initiationRatio
+    
+    print "\n--=RESPONSE TIMES"
+    accumRT=0
+    rtCtr = 0
+    rootInitCtr = 0
+    
+    (hist, bin_edges) = numpy.histogram(numpy.asarray(c.rootResponseTimeList))
+    plt.plot(bin_edges[0:-1], numpy.log(hist+1), ".-r")
+    plt.show()
+    print ("hist: %s\n" %hist)
+    print ("be: %s\n" %bin_edges)
+    for rt in c.rootResponseTimeList:
+        if rt < RESPONSE_TIME_THRESHOLD:
+            rtCtr += 1
+            accumRT += rt
+    print("SUM OF ROOT RT: %s, from %s messages\n" %(accumRT, rtCtr))
+    rootRTavg = accumRT/rtCtr
+    print("AVG OF ROOT RT: %s\n" %(rootRTavg))
+       
+    accumRT=0
+    rtCtr = 0
+    for rt in c.contactResponseTimeList:
+        if rt < RESPONSE_TIME_THRESHOLD:
+            rtCtr += 1
+            accumRT += rt
+    print("SUM OF CONTACT RT: %s, from %s messages\n" %(accumRT, rtCtr))
+    contactRTavg = accumRT/rtCtr
+    print("AVG OF CONTACT RT: %s\n" %(contactRTavg))
+    print("RT RATIO ROOT/CONTACT: %s\n" %(rootRTavg/contactRTavg))
+    
+    output["rootResponseTimes"] = rootRTavg
+    output["contactResponseTimes"] = contactRTavg
+    output["responseTimeRatio"] = rootRTavg/contactRTavg
+   
+
+    print "\n--BURSTS"
+    burstCtrRoot = 0
+    accumBurstRoot = 0
+    for burst in c.rootBurstList:
+        if burst >= BURST_THRESHOLD:
+            burstCtrRoot += 1
+            accumBurstRoot += burstCtrRoot
+    print("SUM OF ROOT BURSTS: %s, from %s instances\n" %(accumBurstRoot, burstCtrRoot))
+    rootBurstavg = accumBurstRoot/burstCtrRoot
+    print("NUM OF ROOT BURSTS: %s" %(burstCtrRoot))
+    print("MAGNITUDE OF TOTAL ROOT BURSTS: %s" %(accumBurstRoot))    
+ 
+    burstCtrContact = 0
+    accumBurstContact = 0
+    for burst in c.contactBurstList:
+        if burst >= BURST_THRESHOLD:
+            burstCtrContact += 1
+            accumBurstContact += burstCtrContact
+    print("SUM OF contact BURSTS: %s, from %s instances\n" %(accumBurstContact, burstCtrContact))
+    contactBurstavg = accumBurstContact/burstCtrContact
+    print("NUM OF contact BURSTS: %s" %(burstCtrContact))
+    print("MAGNITUDE OF TOTAL contact BURSTS: %s" %(accumBurstContact))
+           
+    print("Burst num RATIO ROOT/CONTACT: %s\n" %(burstCtrRoot/burstCtrContact))
+    print("Burst mag RATIO ROOT/CONTACT:  %s\n" %(accumBurstRoot/accumBurstContact))
+    
+    output["rootBurstNum"] = burstCtrRoot
+    output["contactBurstNum"] = burstCtrContact
+    output["burstNumRatio"] = burstCtrRoot/burstCtrContact    
+    
+    output["rootBurstLength"] = rootBurstavg
+    output["contactBurstLength"] = contactBurstavg        
+    output["burstLengthRatio"] = rootBurstavg/contactBurstavg    
+
+
+    
     print "\n--TOP 15 MOST USED WORDS (length >= 3)"
     output["most_used_words"] = c.most_used_words(top=15, threshold=3)
     output["most_used_words"] = sorted(output["most_used_words"], key=operator.itemgetter(1), reverse=True)
@@ -277,29 +374,37 @@ def main():
     #for muw in output["most_used_words"]:
     #    print muw[0]
 
-    print "TIMESTAMPS\n %s\n\n" %c.chatTimeList[0:4]
-    print "Root Response time sample \n %s...\n" %c.rootResponseTimeList[0:4]
-    print "Contact Response time sample \n %s...\n" %c.contactResponseTimeList[0:4]
-    print "Root bursts \n %s\n" %c.rootBurstList
-    print "Contact bursts \n %s\n" %c.contactBurstList
-#    print "Median response time =%s\n\n" %(numpy.median(c.responseTimeList))
+    #print "TIMESTAMPS\n %s\n\n" %c.chatTimeList[0:4]
+    #print "Root Response time sample \n %s...\n" %c.rootResponseTimeList[0:4]
+    #print "Contact Response time sample \n %s...\n" %c.contactResponseTimeList[0:4]
+    #print "Root bursts \n %s\n" %c.rootBurstList
+    #print "Contact bursts \n %s\n" %c.contactBurstList
+    #print "Median response time =%s\n\n" %(numpy.median(c.responseTimeList))
     
     output["senders"] = c.get_senders()
-    #filename = sys.argv[1].split("/")[-1]
-    #arq = open("./logs/"+filename+".json", "w")
-    #arq = open("filename.json", "w")
-    nameTest = sys.argv[1] 
-    arq = open("C:/Python27/"+nameTest+".json", "w")
+    #nameTest = sys.argv[1] 
+    arq = open(filenameAN + ".json", "w")
     arq.write(json.dumps(output))
     pprint(output)
     arq.close()
     
-        
-#    with open('names.csv', 'w') as csvfile:
- #       fieldnames = ['msgs_root', 'msgs_contact', 'chars_root', 'chars_contact', 'qmarks_root', 'qmarks_contact']
-  #      writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-   #     writer.writeheader()
-    #    writer.writerow({'msgs_root': c.message_proportions , 'last_name': 'Beans'})
+basepath = "C:/Python27/MasterChats/"    
+ 
+filenameTXT = [
+          "Chat.CONTACT1-py.txt", 
+          "Chat.CONTACT2-py.txt", 
+          "WhatsApp Chat_ Alessandro Carra.txt",
+          "WhatsApp Chat_ Alessandro Piccioni.txt",
+          "WhatsApp Chat_ Alexandra El Khoury NEWER.txt",
+          "WhatsApp Chat_ Armen Nalband.txt",
+          "WhatsApp Chat_ Francesco Iacovella.txt",
+          "WhatsApp Chat_ Stefania Iacovella.txt",
+          "WhatsApp Chat_ Alfredo Leyton.txt",
+          "WhatsApp Chat_ Javier Alberto Fuentes Cespedes.txt",
+          "WhatsApp Chat_ Christopher Storaker.txt",
+          "WhatsApp Chat_ Alejandra Hidalgo.txt",
+          "WhatsApp Chat_ Alberto Cardenas.txt"          
+          ]
 
-
-main()
+for f in filenameTXT:    
+    main(basepath + f)
