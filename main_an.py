@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 from datetime import datetime
 import codecs
@@ -57,7 +58,13 @@ class Chat():
                 colonIndex = [x.start() for x in re.finditer(':', l)]
                 #print ind
                 chatTimeString = l[0:colonIndex[2]] #grab the characters that make up the date and time (Everthing until the third colon
-                chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
+
+                if "AM" in chatTimeString or "PM" in chatTimeString:
+                    chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
+                else:
+                    chatTime = datetime.strptime(chatTimeString, "%d/%m/%y %H:%M:%S") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
+                
+#                chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
                 self.chatTimeList.append(chatTime)                               
                 self.senderlist.append(sender)
                 self.messagelist.append(message)
@@ -81,8 +88,8 @@ class Chat():
                         self.rootInitiations +=1
                     elif self.senderlist[senderIndex] == contactName:
                         self.contactInitiations +=1
-                    else:   
-                        sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT\n")                    
+                    else:    
+                        sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT1\n")                    
                 print("response time: %d\n" %(dt.seconds) )
                 if self.senderlist[senderIndex] == rootName:    #is sender the root?
                     self.rootBurstList.append(burstCount)
@@ -91,7 +98,8 @@ class Chat():
                     self.contactBurstList.append(burstCount)
                     self.contactResponseTimeList.append(dt.seconds)
                 else:   
-                    sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT\n")                    
+                        errorName = self.senderlist[senderIndex]
+                        sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT2\n")                    
                 burstCount = 1  
                 
                 #save 
@@ -197,7 +205,13 @@ class Chat():
             counter["chars"][self.senderlist[i]] += len(self.messagelist[i])
             counter["qmarks"][self.senderlist[i]] += self.messagelist[i].count('?')
             counter["exclams"][self.senderlist[i]] += self.messagelist[i].count('!')
-            counter["media"][self.senderlist[i]] += (self.messagelist[i].count('<media omitted>')+self.messagelist[i].count('<image omitted>')+self.messagelist[i].count('<audio omitted>'))
+            counter["media"][self.senderlist[i]] += (self.messagelist[i].count('<media omitted>')+
+                                                    self.messagelist[i].count('<image omitted>')+
+                                                    self.messagelist[i].count('<image omitted>')+
+                                                    self.messagelist[i].count('<audio omitted>')+
+                                                    self.messagelist[i].count('<‎immagine omessa>')+
+                                                    self.messagelist[i].count('<video omesso>')+
+                                                    self.messagelist[i].count('<‎vCROOTd omessa>'))
             total += 1
         counter["total_messages"] = 0
         counter["total_words"] = 0
@@ -277,9 +291,10 @@ def main(filenameAN):
     output["shifts"] = c.count_messages_per_shift()
     printDict(output["shifts"], "shifts", 0)
 
-    print "\n--WEEKDAY"
-    output["weekdays"] = c.count_messages_per_weekday()
-    printDict(output["weekdays"], "weekday", 0)
+#  WEEKDAY CAN'T HANDLE BOTH TIME FORMATS YET
+#    print "\n--WEEKDAY"
+ #   output["weekdays"] = c.count_messages_per_weekday()
+  #  printDict(output["weekdays"], "weekday", 0)
 
     print "\n--AVERAGE MESSAGE LENGTH"
     output["lengths"] = c.average_message_length()
@@ -339,7 +354,11 @@ def main(filenameAN):
             burstCtrRoot += 1
             accumBurstRoot += burstCtrRoot
     print("SUM OF ROOT BURSTS: %s, from %s instances\n" %(accumBurstRoot, burstCtrRoot))
-    rootBurstavg = accumBurstRoot/burstCtrRoot
+
+    try:
+        rootBurstavg = accumBurstRoot/burstCtrRoot
+    except:
+        rootBurstavg = 0
     print("NUM OF ROOT BURSTS: %s" %(burstCtrRoot))
     print("MAGNITUDE OF TOTAL ROOT BURSTS: %s" %(accumBurstRoot))    
  
@@ -350,7 +369,10 @@ def main(filenameAN):
             burstCtrContact += 1
             accumBurstContact += burstCtrContact
     print("SUM OF contact BURSTS: %s, from %s instances\n" %(accumBurstContact, burstCtrContact))
-    contactBurstavg = accumBurstContact/burstCtrContact
+    try:
+        contactBurstavg = accumBurstContact/burstCtrContact
+    except:
+        contactBurstavg = 0            
     print("NUM OF contact BURSTS: %s" %(burstCtrContact))
     print("MAGNITUDE OF TOTAL contact BURSTS: %s" %(accumBurstContact))
            
@@ -359,11 +381,17 @@ def main(filenameAN):
     
     output["rootBurstNum"] = burstCtrRoot
     output["contactBurstNum"] = burstCtrContact
-    output["burstNumRatio"] = burstCtrRoot/burstCtrContact    
+    try:
+        output["burstNumRatio"] = burstCtrRoot/burstCtrContact    
+    except:
+        output["burstNumRatio"] = burstCtrRoot
     
     output["rootBurstLength"] = rootBurstavg
     output["contactBurstLength"] = contactBurstavg        
-    output["burstLengthRatio"] = rootBurstavg/contactBurstavg    
+    try:
+        output["burstLengthRatio"] = rootBurstavg/contactBurstavg    
+    except:
+        output["burstLengthRatio"] = rootBurstavg    
 
 
     
@@ -388,23 +416,13 @@ def main(filenameAN):
     pprint(output)
     arq.close()
     
-basepath = "C:/Python27/MasterChats/"    
- 
-filenameTXT = [
-          "Chat.CONTACT1-py.txt", 
-          "Chat.CONTACT2-py.txt", 
-          "WhatsApp Chat_ Alessandro Carra.txt",
-          "WhatsApp Chat_ Alessandro Piccioni.txt",
-          "WhatsApp Chat_ Alexandra El Khoury NEWER.txt",
-          "WhatsApp Chat_ Armen Nalband.txt",
-          "WhatsApp Chat_ Francesco Iacovella.txt",
-          "WhatsApp Chat_ Stefania Iacovella.txt",
-          "WhatsApp Chat_ Alfredo Leyton.txt",
-          "WhatsApp Chat_ Javier Alberto Fuentes Cespedes.txt",
-          "WhatsApp Chat_ Christopher Storaker.txt",
-          "WhatsApp Chat_ Alejandra Hidalgo.txt",
-          "WhatsApp Chat_ Alberto Cardenas.txt"          
-          ]
+#basepath = "C:/Python27/MasterChats/"    
+
+import glob   
+filenameTXT = glob.glob('C:/Python27/MasterChats/*.txt') #read in all the chat files in the directory
 
 for f in filenameTXT:    
-    main(basepath + f)
+    print f
+    print ("**************")
+    main(f) #run the analysis for each file
+
