@@ -64,6 +64,7 @@ class Chat():
                 else:
                     chatTime = datetime.strptime(chatTimeString, "%d/%m/%y %H:%M:%S") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
                 
+                
 #                chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
                 self.chatTimeList.append(chatTime)                               
                 self.senderlist.append(sender)
@@ -82,7 +83,7 @@ class Chat():
             dt = t1-t0
             if self.senderlist[senderIndex] != self.senderlist[senderIndex-1]: #is sender the same as the last message?
                 #sender changed, store the burst count and reset 
-                print("sender changed: %s") %(self.senderlist[senderIndex])
+#                print("sender changed: %s") %(self.senderlist[senderIndex])
                 if (dt.seconds > INITIATION_THRESHOLD):
                     if self.senderlist[senderIndex] == rootName:
                         self.rootInitiations +=1
@@ -90,12 +91,12 @@ class Chat():
                         self.contactInitiations +=1
                     else:    
                         sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT1\n")                    
-                print("response time: %d\n" %(dt.seconds) )
+                #print("response time: %d\n" %(dt.seconds) )
                 if self.senderlist[senderIndex] == rootName:    #is sender the root?
-                    self.rootBurstList.append(burstCount)
+                    self.contactBurstList.append(burstCount) #store the burst count for the last sender, which is the opposite of current
                     self.rootResponseTimeList.append(dt.seconds)                    
                 elif self.senderlist[senderIndex] == contactName: #is sender the contact?
-                    self.contactBurstList.append(burstCount)
+                    self.rootBurstList.append(burstCount) #store the burst count for the last sender, which is the opposite of current
                     self.contactResponseTimeList.append(dt.seconds)
                 else:   
                         errorName = self.senderlist[senderIndex]
@@ -106,7 +107,9 @@ class Chat():
                 
             else:
                 burstCount+=1 #accumulate the number of messages sent in a row  
-                print"repeat sender: %d %s\n" %(burstCount, self.senderlist[senderIndex])
+                if burstCount >= 3:
+                    print"bursting: %d %s\n" %(burstCount, self.senderlist[senderIndex])        
+                #print"repeat sender: %d %s\n" %(burstCount, self.senderlist[senderIndex])
                
             
             #self.responseTimeList.append(dt.seconds)
@@ -205,13 +208,18 @@ class Chat():
             counter["chars"][self.senderlist[i]] += len(self.messagelist[i])
             counter["qmarks"][self.senderlist[i]] += self.messagelist[i].count('?')
             counter["exclams"][self.senderlist[i]] += self.messagelist[i].count('!')
-            counter["media"][self.senderlist[i]] += (self.messagelist[i].count('<media omitted>')+
+            counter["media"][self.senderlist[i]] += (
+                                                    self.messagelist[i].count('<media omitted>')+
                                                     self.messagelist[i].count('<image omitted>')+
                                                     self.messagelist[i].count('<image omitted>')+
                                                     self.messagelist[i].count('<audio omitted>')+
                                                     self.messagelist[i].count('<‎immagine omessa>')+
                                                     self.messagelist[i].count('<video omesso>')+
-                                                    self.messagelist[i].count('<‎vCROOTd omessa>'))
+                                                    self.messagelist[i].count('<‎vCROOTd omessa>')+
+                                                    self.messagelist[i].count('Photo Message')+
+                                                    self.messagelist[i].count('Video Message')+
+                                                    self.messagelist[i].count('Sticker')
+                                                    )
             total += 1
         counter["total_messages"] = 0
         counter["total_words"] = 0
@@ -309,7 +317,10 @@ def main(filenameAN):
     print("contact initiations %d" %c.contactInitiations)
     output["rootInitiations"] = c.rootInitiations
     output["contactInitiations"] = c.contactInitiations
-    initiationRatio = c.rootInitiations/c.contactInitiations
+    try:
+        initiationRatio = c.rootInitiations/c.contactInitiations
+    except:
+        initiationRatio = c.rootInitiations
     output["initiationRatio"] = initiationRatio
     
     print "\n--=RESPONSE TIMES"
@@ -359,8 +370,6 @@ def main(filenameAN):
         rootBurstavg = accumBurstRoot/burstCtrRoot
     except:
         rootBurstavg = 0
-    print("NUM OF ROOT BURSTS: %s" %(burstCtrRoot))
-    print("MAGNITUDE OF TOTAL ROOT BURSTS: %s" %(accumBurstRoot))    
  
     burstCtrContact = 0
     accumBurstContact = 0
@@ -368,19 +377,15 @@ def main(filenameAN):
         if burst >= BURST_THRESHOLD:
             burstCtrContact += 1
             accumBurstContact += burstCtrContact
-    print("SUM OF contact BURSTS: %s, from %s instances\n" %(accumBurstContact, burstCtrContact))
+
     try:
         contactBurstavg = accumBurstContact/burstCtrContact
     except:
         contactBurstavg = 0            
-    print("NUM OF contact BURSTS: %s" %(burstCtrContact))
-    print("MAGNITUDE OF TOTAL contact BURSTS: %s" %(accumBurstContact))
            
-    print("Burst num RATIO ROOT/CONTACT: %s\n" %(burstCtrRoot/burstCtrContact))
-    print("Burst mag RATIO ROOT/CONTACT:  %s\n" %(accumBurstRoot/accumBurstContact))
-    
     output["rootBurstNum"] = burstCtrRoot
     output["contactBurstNum"] = burstCtrContact
+
     try:
         output["burstNumRatio"] = burstCtrRoot/burstCtrContact    
     except:
