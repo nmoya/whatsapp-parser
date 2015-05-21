@@ -13,13 +13,11 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 
 
-
-
 class Chat():
 
     def __init__(self, filename):
         self.filename = filename
-        self.raw_messages = []
+        self.rawMessages = []
 
         self.datelist = []
         self.timelist = []
@@ -33,17 +31,17 @@ class Chat():
         self.rootInitiations = 0
         self.contactInitiations = 0
 
-    def open_file(self):
+    def open_file_whatsapp(self):
         arq = codecs.open(self.filename, "r", "utf-8-sig")
         content = arq.read()
         arq.close()
         lines = content.split("\n")
         lines = [l for l in lines if len(l) != 1]
         for l in lines:
-            self.raw_messages.append(l.encode("utf-8"))
+            self.rawMessages.append(l.encode("utf-8"))
 
     def feed_lists(self):
-        for l in self.raw_messages:
+        for l in self.rawMessages:
             msg_date, sep, msg = l.partition(": ")
             raw_date, sep, time = msg_date.partition(" ")
             sender, sep, message = msg.partition(": ")
@@ -53,70 +51,92 @@ class Chat():
             #print (raw_date)
             #print ("\n\n\n")
             if message:
-                self.datelist.append(raw_date) 
-                self.timelist.append(time) #here is the time object; save it              
+                self.datelist.append(raw_date)
+                self.timelist.append(time)  # here is the time object; save it
                 colonIndex = [x.start() for x in re.finditer(':', l)]
-                #print ind
-                chatTimeString = l[0:colonIndex[2]] #grab the characters that make up the date and time (Everthing until the third colon
+                # print ind
+                # grab the characters that make up the date and time (Everthing
+                # until the third colon
+                chatTimeString = l[0:colonIndex[2]]
 
                 if "AM" in chatTimeString or "PM" in chatTimeString:
-                    chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
+                    # convert to a data object, format of the whatsapp data
+                    # 8/2/14, 12:59:24 PM
+                    chatTime = datetime.strptime(
+                        chatTimeString, "%m/%d/%y, %I:%M:%S %p")
                 else:
-                    chatTime = datetime.strptime(chatTimeString, "%d/%m/%y %H:%M:%S") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
-                
-                
-#                chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p") #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24 PM
-                self.chatTimeList.append(chatTime)                               
+                    # convert to a data object, format of the whatsapp data
+                    # 8/2/14, 12:59:24 PM
+                    chatTime = datetime.strptime(
+                        chatTimeString, "%d/%m/%y %H:%M:%S")
+
+
+# chatTime = datetime.strptime(chatTimeString, "%m/%d/%y, %I:%M:%S %p")
+# #convert to a data object, format of the whatsapp data 8/2/14, 12:59:24
+# PM
+                self.chatTimeList.append(chatTime)
                 self.senderlist.append(sender)
                 self.messagelist.append(message)
             else:
                 self.messagelist.append(l)
-        t0=self.chatTimeList[0]
-        senderIndex=0;
-        burstCount=1; #variable to count the number of messages in a row sent by sender
+        t0 = self.chatTimeList[0]
+        senderIndex = 0
+        # variable to count the number of messages in a row sent by sender
+        burstCount = 1
 
         rootName = "ROOT"
         contactName = "CONTACT"
-        INITIATION_THRESHOLD = (8*60*60)
-        
-        for t1 in self.chatTimeList[1:]: #perform the operations that are dependant on multiple messages (response time, bursts)
-            dt = t1-t0
-            if self.senderlist[senderIndex] != self.senderlist[senderIndex-1]: #is sender the same as the last message?
-                #sender changed, store the burst count and reset 
-#                print("sender changed: %s") %(self.senderlist[senderIndex])
+        INITIATION_THRESHOLD = (8 * 60 * 60)
+
+        # perform the operations that are dependant on multiple messages
+        # (response time, bursts)
+        for t1 in self.chatTimeList[1:]:
+            dt = t1 - t0
+            # is sender the same as the last message?
+            if self.senderlist[senderIndex] != self.senderlist[senderIndex - 1]:
+                # sender changed, store the burst count and reset
+                #                print("sender changed: %s") %(self.senderlist[senderIndex])
                 if (dt.seconds > INITIATION_THRESHOLD):
                     if self.senderlist[senderIndex] == rootName:
-                        self.rootInitiations +=1
+                        self.rootInitiations += 1
                     elif self.senderlist[senderIndex] == contactName:
-                        self.contactInitiations +=1
-                    else:    
-                        sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT1\n")                    
+                        self.contactInitiations += 1
+                    else:
+                        sys.exit(
+                            "ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT1\n")
                 #print("response time: %d\n" %(dt.seconds) )
-                if self.senderlist[senderIndex] == rootName:    #is sender the root?
-                    self.contactBurstList.append(burstCount) #store the burst count for the last sender, which is the opposite of current
-                    self.rootResponseTimeList.append(dt.seconds)                    
-                elif self.senderlist[senderIndex] == contactName: #is sender the contact?
-                    self.rootBurstList.append(burstCount) #store the burst count for the last sender, which is the opposite of current
+                # is sender the root?
+                if self.senderlist[senderIndex] == rootName:
+                    # store the burst count for the last sender, which is the
+                    # opposite of current
+                    self.contactBurstList.append(burstCount)
+                    self.rootResponseTimeList.append(dt.seconds)
+                # is sender the contact?
+                elif self.senderlist[senderIndex] == contactName:
+                    # store the burst count for the last sender, which is the
+                    # opposite of current
+                    self.rootBurstList.append(burstCount)
                     self.contactResponseTimeList.append(dt.seconds)
-                else:   
-                        errorName = self.senderlist[senderIndex]
-                        sys.exit("ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT2\n")                    
-                burstCount = 1  
-                
-                #save 
-                
+                else:
+                    errorName = self.senderlist[senderIndex]
+                    sys.exit(
+                        "ERROR CHANGE NAMES IN CHAT TO ROOT AND CONTACT2\n")
+                burstCount = 1
+
+                # save
+
             else:
-                burstCount+=1 #accumulate the number of messages sent in a row  
+                # accumulate the number of messages sent in a row
+                burstCount += 1
                 if burstCount >= 3:
-                    print"bursting: %d %s\n" %(burstCount, self.senderlist[senderIndex])        
-                #print"repeat sender: %d %s\n" %(burstCount, self.senderlist[senderIndex])
-               
-            
-            #self.responseTimeList.append(dt.seconds)
-            t0 = t1            
-            senderIndex+=1
-            
-        
+                    print"bursting: %d %s\n" % (burstCount, self.senderlist[senderIndex])
+                # print"repeat sender: %d %s\n" %(burstCount,
+                # self.senderlist[senderIndex])
+
+            # self.responseTimeList.append(dt.seconds)
+            t0 = t1
+            senderIndex += 1
+
     def print_history(self, end=0):
         if end == 0:
             end = len(self.messagelist)
@@ -131,7 +151,8 @@ class Chat():
     def count_messages_per_weekday(self):
         counter = dict()
         for i in range(len(self.datelist)):
-            month, day, year = self.datelist[i].split("/") #AN edited date order
+            month, day, year = self.datelist[
+                i].split("/")  # AN edited date order
             parsed_date = "%s-%s-%s" % (year, month, day)
             #print ("DATE: ")
             #print (parsed_date)
@@ -173,7 +194,9 @@ class Chat():
             counters[pattern] = dict()
             for s in senders:
                 counters[pattern][s] = 0
-            pattern_dict[pattern] = re.compile(re.escape(pattern), re.I) #re=regular expression, .I = ignore case, .compile = convert to object 
+            # re=regular expression, .I = ignore case, .compile = convert to
+            # object
+            pattern_dict[pattern] = re.compile(re.escape(pattern), re.I)
         for i in range(len(self.messagelist)):
             for pattern in patternlist:
                 search_result = pattern_dict[pattern].\
@@ -206,20 +229,22 @@ class Chat():
             counter["words"][self.senderlist[i]] += \
                 len(self.messagelist[i].split(" "))
             counter["chars"][self.senderlist[i]] += len(self.messagelist[i])
-            counter["qmarks"][self.senderlist[i]] += self.messagelist[i].count('?')
-            counter["exclams"][self.senderlist[i]] += self.messagelist[i].count('!')
+            counter["qmarks"][
+                self.senderlist[i]] += self.messagelist[i].count('?')
+            counter["exclams"][
+                self.senderlist[i]] += self.messagelist[i].count('!')
             counter["media"][self.senderlist[i]] += (
-                                                    self.messagelist[i].count('<media omitted>')+
-                                                    self.messagelist[i].count('<image omitted>')+
-                                                    self.messagelist[i].count('<image omitted>')+
-                                                    self.messagelist[i].count('<audio omitted>')+
-                                                    self.messagelist[i].count('<‎immagine omessa>')+
-                                                    self.messagelist[i].count('<video omesso>')+
-                                                    self.messagelist[i].count('<‎vCROOTd omessa>')+
-                                                    self.messagelist[i].count('Photo Message')+
-                                                    self.messagelist[i].count('Video Message')+
-                                                    self.messagelist[i].count('Sticker')
-                                                    )
+                self.messagelist[i].count('<media omitted>') +
+                self.messagelist[i].count('<image omitted>') +
+                self.messagelist[i].count('<image omitted>') +
+                self.messagelist[i].count('<audio omitted>') +
+                self.messagelist[i].count('<‎immagine omessa>') +
+                self.messagelist[i].count('<video omesso>') +
+                self.messagelist[i].count('<‎vCROOTd omessa>') +
+                self.messagelist[i].count('Photo Message') +
+                self.messagelist[i].count('Video Message') +
+                self.messagelist[i].count('Sticker')
+            )
             total += 1
         counter["total_messages"] = 0
         counter["total_words"] = 0
@@ -263,23 +288,24 @@ class Chat():
         output = sorted_words[:top]
         return output
 
+
 def printDict(dic, parent, depth):
     tup = sorted(dic.iteritems(), key=operator.itemgetter(1))
     isLeaf = True
     for key in tup:
         if isinstance(dic[key[0]], dict):
             isLeaf = False
-    if isLeaf and depth!=0:
-        print " "*(depth-1)*2, parent
+    if isLeaf and depth != 0:
+        print " " * (depth - 1) * 2, parent
     for key in tup:
         if isinstance(dic[key[0]], dict):
-            printDict(dic[key[0]], key[0], depth+1)
+            printDict(dic[key[0]], key[0], depth + 1)
         else:
-            print " "*depth*2, str(key[0]), "->", dic[key[0]]
+            print " " * depth * 2, str(key[0]), "->", dic[key[0]]
 
 
 def main(filenameAN):
-    #if len(sys.argv) < 2:
+    # if len(sys.argv) < 2:
     #    print "Run: python main.py <TextFileName> [regex. patterns]"
     #    sys.exit(1)
     #c = Chat(sys.argv[1])
@@ -287,14 +313,16 @@ def main(filenameAN):
     c.open_file()
     c.feed_lists()
     output = dict()
-    RESPONSE_TIME_THRESHOLD = (3*60*60) #number hours for 'big delay' in response time (to strip out in response time calculation)
-    BURST_THRESHOLD = 3 #consider a 'burst' if someone sends 3 or more messages in a row
+    # number hours for 'big delay' in response time (to strip out in response
+    # time calculation)
+    RESPONSE_TIME_THRESHOLD = (3 * 60 * 60)
+    # consider a 'burst' if someone sends 3 or more messages in a row
+    BURST_THRESHOLD = 3
 
-    
     print "\n--PROPORTIONS"
     output["proportions"] = c.message_proportions()
     printDict(output["proportions"], "proportions", 0)
-    
+
     print "\n--SHIFTS"
     output["shifts"] = c.count_messages_per_shift()
     printDict(output["shifts"], "shifts", 0)
@@ -313,49 +341,48 @@ def main(filenameAN):
     printDict(output["patterns"], "patterns", 0)
 
     print "\n--INITIATIONS"
-    print("root initiations %d" %c.rootInitiations)
-    print("contact initiations %d" %c.contactInitiations)
+    print("root initiations %d" % c.rootInitiations)
+    print("contact initiations %d" % c.contactInitiations)
     output["rootInitiations"] = c.rootInitiations
     output["contactInitiations"] = c.contactInitiations
     try:
-        initiationRatio = c.rootInitiations/c.contactInitiations
+        initiationRatio = c.rootInitiations / c.contactInitiations
     except:
         initiationRatio = c.rootInitiations
     output["initiationRatio"] = initiationRatio
-    
+
     print "\n--=RESPONSE TIMES"
-    accumRT=0
+    accumRT = 0
     rtCtr = 0
     rootInitCtr = 0
-    
+
     (hist, bin_edges) = numpy.histogram(numpy.asarray(c.rootResponseTimeList))
-    plt.plot(bin_edges[0:-1], numpy.log(hist+1), ".-r")
+    plt.plot(bin_edges[0:-1], numpy.log(hist + 1), ".-r")
     plt.show()
-    print ("hist: %s\n" %hist)
-    print ("be: %s\n" %bin_edges)
+    print("hist: %s\n" % hist)
+    print("be: %s\n" % bin_edges)
     for rt in c.rootResponseTimeList:
         if rt < RESPONSE_TIME_THRESHOLD:
             rtCtr += 1
             accumRT += rt
-    print("SUM OF ROOT RT: %s, from %s messages\n" %(accumRT, rtCtr))
-    rootRTavg = accumRT/rtCtr
-    print("AVG OF ROOT RT: %s\n" %(rootRTavg))
-       
-    accumRT=0
+    print("SUM OF ROOT RT: %s, from %s messages\n" % (accumRT, rtCtr))
+    rootRTavg = accumRT / rtCtr
+    print("AVG OF ROOT RT: %s\n" % (rootRTavg))
+
+    accumRT = 0
     rtCtr = 0
     for rt in c.contactResponseTimeList:
         if rt < RESPONSE_TIME_THRESHOLD:
             rtCtr += 1
             accumRT += rt
-    print("SUM OF CONTACT RT: %s, from %s messages\n" %(accumRT, rtCtr))
-    contactRTavg = accumRT/rtCtr
-    print("AVG OF CONTACT RT: %s\n" %(contactRTavg))
-    print("RT RATIO ROOT/CONTACT: %s\n" %(rootRTavg/contactRTavg))
-    
+    print("SUM OF CONTACT RT: %s, from %s messages\n" % (accumRT, rtCtr))
+    contactRTavg = accumRT / rtCtr
+    print("AVG OF CONTACT RT: %s\n" % (contactRTavg))
+    print("RT RATIO ROOT/CONTACT: %s\n" % (rootRTavg / contactRTavg))
+
     output["rootResponseTimes"] = rootRTavg
     output["contactResponseTimes"] = contactRTavg
-    output["responseTimeRatio"] = rootRTavg/contactRTavg
-   
+    output["responseTimeRatio"] = rootRTavg / contactRTavg
 
     print "\n--BURSTS"
     burstCtrRoot = 0
@@ -364,13 +391,14 @@ def main(filenameAN):
         if burst >= BURST_THRESHOLD:
             burstCtrRoot += 1
             accumBurstRoot += burstCtrRoot
-    print("SUM OF ROOT BURSTS: %s, from %s instances\n" %(accumBurstRoot, burstCtrRoot))
+    print("SUM OF ROOT BURSTS: %s, from %s instances\n" %
+          (accumBurstRoot, burstCtrRoot))
 
     try:
-        rootBurstavg = accumBurstRoot/burstCtrRoot
+        rootBurstavg = accumBurstRoot / burstCtrRoot
     except:
         rootBurstavg = 0
- 
+
     burstCtrContact = 0
     accumBurstContact = 0
     for burst in c.contactBurstList:
@@ -379,55 +407,54 @@ def main(filenameAN):
             accumBurstContact += burstCtrContact
 
     try:
-        contactBurstavg = accumBurstContact/burstCtrContact
+        contactBurstavg = accumBurstContact / burstCtrContact
     except:
-        contactBurstavg = 0            
-           
+        contactBurstavg = 0
+
     output["rootBurstNum"] = burstCtrRoot
     output["contactBurstNum"] = burstCtrContact
 
     try:
-        output["burstNumRatio"] = burstCtrRoot/burstCtrContact    
+        output["burstNumRatio"] = burstCtrRoot / burstCtrContact
     except:
         output["burstNumRatio"] = burstCtrRoot
-    
+
     output["rootBurstLength"] = rootBurstavg
-    output["contactBurstLength"] = contactBurstavg        
+    output["contactBurstLength"] = contactBurstavg
     try:
-        output["burstLengthRatio"] = rootBurstavg/contactBurstavg    
+        output["burstLengthRatio"] = rootBurstavg / contactBurstavg
     except:
-        output["burstLengthRatio"] = rootBurstavg    
+        output["burstLengthRatio"] = rootBurstavg
 
-
-    
     print "\n--TOP 15 MOST USED WORDS (length >= 3)"
     output["most_used_words"] = c.most_used_words(top=15, threshold=3)
-    output["most_used_words"] = sorted(output["most_used_words"], key=operator.itemgetter(1), reverse=True)
-    #print output["most_used_words"]
-    #for muw in output["most_used_words"]:
+    output["most_used_words"] = sorted(
+        output["most_used_words"], key=operator.itemgetter(1), reverse=True)
+    # print output["most_used_words"]
+    # for muw in output["most_used_words"]:
     #    print muw[0]
 
-    #print "TIMESTAMPS\n %s\n\n" %c.chatTimeList[0:4]
-    #print "Root Response time sample \n %s...\n" %c.rootResponseTimeList[0:4]
-    #print "Contact Response time sample \n %s...\n" %c.contactResponseTimeList[0:4]
-    #print "Root bursts \n %s\n" %c.rootBurstList
-    #print "Contact bursts \n %s\n" %c.contactBurstList
-    #print "Median response time =%s\n\n" %(numpy.median(c.responseTimeList))
-    
+    # print "TIMESTAMPS\n %s\n\n" %c.chatTimeList[0:4]
+    # print "Root Response time sample \n %s...\n" %c.rootResponseTimeList[0:4]
+    # print "Contact Response time sample \n %s...\n" %c.contactResponseTimeList[0:4]
+    # print "Root bursts \n %s\n" %c.rootBurstList
+    # print "Contact bursts \n %s\n" %c.contactBurstList
+    # print "Median response time =%s\n\n" %(numpy.median(c.responseTimeList))
+
     output["senders"] = c.get_senders()
-    #nameTest = sys.argv[1] 
+    #nameTest = sys.argv[1]
     arq = open(filenameAN + ".json", "w")
     arq.write(json.dumps(output))
     pprint(output)
     arq.close()
-    
-#basepath = "C:/Python27/MasterChats/"    
 
-import glob   
-filenameTXT = glob.glob('C:/Python27/MasterChats/*.txt') #read in all the chat files in the directory
+#basepath = "C:/Python27/MasterChats/"
 
-for f in filenameTXT:    
+import glob
+# read in all the chat files in the directory
+filenameTXT = glob.glob('C:/Python27/MasterChats/*.txt')
+
+for f in filenameTXT:
     print f
-    print ("**************")
-    main(f) #run the analysis for each file
-
+    print("**************")
+    main(f)  # run the analysis for each file
