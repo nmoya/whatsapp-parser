@@ -6,13 +6,17 @@ class ParserWhatsapp():
         self.raw_messages = raw_messages
 
     def parse(self):
-		list_of_messages = []
-		list_of_senders  = []
+        list_of_messages = []
+        list_of_senders  = []
         for l in self.raw_messages:
-        	m = message.Message()
+            m = dict()
             msg_date, sep, msg = l.partition(": ")
             raw_date, sep, time = msg_date.partition(" ")
             sender, sep, message = msg.partition(": ")
+            if len(raw_date) != 10: # This ignores a minority of bad formatted lines.
+                continue
+            print raw_date, "*", time, "*", sender, "*", message
+            continue
             #print ("\n\n\nRAW: ")
             #print (raw_date)
             raw_date = raw_date.replace(",", "")

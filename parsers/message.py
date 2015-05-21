@@ -1,10 +1,10 @@
 class Message():
 
-    def __init__(self, from, to, content, date, time, datetime,
+    def __init__(self, sender, receiver, content, date, time, datetime,
                  root_response_time, contact_response_time,
                  root_burst, contact_burst):
-		self.from                  = from
-		self.to                    = to
+		self.sender                = sender
+		self.receiver              = receiver
 		self.content               = content
 		self.date                  = date
 		self.time                  = time

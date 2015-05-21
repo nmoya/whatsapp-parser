@@ -8,7 +8,8 @@ import operator
 import sys
 import json
 import csv
-from parsers import *
+from parsers import whatsapp
+from parsers import facebook
 
 
 class Chat():
@@ -17,7 +18,7 @@ class Chat():
         self.filename = filename
         self.platform = platform
         self.raw_messages = []
-        seff.messages = []     # List of Messages objects
+        self.messages = []     # List of Messages objects
         self.senders = []
         self.root_initiations = 0
         self.contact_initiations = 0
@@ -46,16 +47,23 @@ class Chat():
 
     def parse_messages(self):
         if self.platform == "WhatsApp":
-            p = ParserWhatsapp(self.raw_messages)
+            p = whatsapp.ParserWhatsapp(self.raw_messages)
             self.messages = p.parse()
         elif self.platform == "Facebook":
-            p = ParserFacebook(self.raw_messages)
+            p = facebook.ParserFacebook(self.raw_messages)
             self.messages = p.parse()
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print "ERROR: python app.py <chat_log> <WhatsApp|Facebook>"
+        sys.exit(-1)
+
+    options = ["WhatsApp", "Facebook"]
+    if sys.argv[2] not in options:
+        print "ERROR: Please choose one:"
+        for o in options:
+            print o
         sys.exit(-1)
 
     c = Chat(sys.argv[1], sys.argv[2])
