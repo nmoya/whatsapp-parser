@@ -5,8 +5,9 @@ filenameTXT = glob.glob('C:/Python27/MasterChats/*.txt.json') #read in all the c
 fo = open("C:/Python27/filenamesMaster.txt", "wb")
 
 for f in filenameTXT:    
-    print f
-    fo.write('"'+f+'",\n')        
+    print f[24:]
+    fo.write('"'+f[24:]+'",\n')        
 fo.close()
 
 
+#print len('C:/Python27/MasterChats')
