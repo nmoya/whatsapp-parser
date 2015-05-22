@@ -221,4 +221,5 @@ def main():
     arq.write(json.dumps(output))
     arq.close()
 
-main()
+if __name__ == "__main__":
+    main()

@@ -1,24 +1,24 @@
 whatsapp-parser
 ===============
 
-Parser to the What's App log file. No more statistics will be added. Feel free to fork and modify :-)
+Parser to the What's App log file. Feel free to fork and modify :-)
 
 ### Dependencies ###
 - Python 2.*
 
 ### Input ##
 
-A Whatsapp history file and an optional list of regular expression patterns.
+A Whatsapp chat history file and an optional list of regular expression patterns.
 
 ### Output ##
 
-- Several statistics about the message history and the frequency of each pattern.
-- A JSON file is created within /logs/ folder.
+- Several statistics about the chat history and the frequency of each pattern.
+- A JSON file is created inside /logs/ folder.
 
 ### Usage Steps ####
-- Export your Whatsapp history. (http://www.whatsapp.com/faq/general/23753886)
+- Export your Whatsapp chat history. (http://www.whatsapp.com/faq/general/23753886)
 - Clone this repository.
-- For simplicity only, put the history file in the same folder of the cloned repository.
+- For simplicity, put the chat history file in the same folder of the cloned repository.
 - Open your terminal and execute:
 
 ```
