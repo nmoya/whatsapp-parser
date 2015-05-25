@@ -66,6 +66,9 @@ def date_to_str(date):
 
 
 def date_to_weekday(date):
+    if "/" in date:
+        month, day, year = self.datelist[i].split("/")
+        parsed_date = "%s-%s-%s" % (year, month, day)
     return time.strftime("%A", time.strptime(date, "%Y-%m-%d"))
 
 
