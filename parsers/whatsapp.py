@@ -1,7 +1,6 @@
 from datetime import datetime
-import re
-import date
 import message
+import calendar
 
 ''' A line can be either: 
         09/12/2012 17:03:48: Sender Name: Message
@@ -44,6 +43,6 @@ class ParserWhatsapp():
                     datetime_obj = datetime.strptime(msg_date, "%d/%m/%Y %H:%M:%S")
 
             set_of_senders.add(sender)
-            list_of_messages.append(message.Message(sender, content, date, time, datetime_obj))
+            list_of_messages.append(message.Message(sender, content, raw_date, time, datetime_obj))
 
         return list(set_of_senders), list_of_messages

@@ -22,14 +22,14 @@ def timestamp():
     return "%s %s" % (ymd(), hms())
 
 
-def date_split(date, separator="-"):
-    year, month, day = map(int, date.split(separator))
+def date_split(date_str, separator="-"):
+    year, month, day = map(int, date_str.split(separator))
     return year, month, day
 
 
-def valid_date(date):
+def valid_date(date_str):
     valid = True
-    year, month, day = date_split(date)
+    year, month, day = date_split(date_str)
     try:
         datetime(year, month, day)
     except ValueError:
@@ -54,22 +54,23 @@ def datecmp(date1, date2):
         return False
 
 
-def date_operation(date, num):
-    year, month, day = date_split(date)
+def date_operation(date_str, num):
+    year, month, day = date_split(date_str)
     start_date = datetime(year, month, day)
     end_date = start_date + timedelta(days=num)
     return end_date
 
 
-def date_to_str(date):
+def date_to_str(date_str):
     return date.strftime('%Y-%m-%d')
 
 
-def date_to_weekday(date):
-    if "/" in date:
-        month, day, year = self.datelist[i].split("/")
+def date_to_weekday(date_str):
+    if date_str.count("/") > 0:
+        day, month, year = date_str.split("/")
         parsed_date = "%s-%s-%s" % (year, month, day)
-    return time.strftime("%A", time.strptime(date, "%Y-%m-%d"))
+        date_str = parsed_date
+    return time.strftime("%A", time.strptime(date_str, "%Y-%m-%d"))
 
 
 def date_interval(initial_date, length, step=1, separator="-"):

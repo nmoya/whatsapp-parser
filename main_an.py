@@ -2,7 +2,7 @@
 from __future__ import division
 from datetime import datetime
 import codecs
-import date
+import datelib
 import re
 import operator
 import sys

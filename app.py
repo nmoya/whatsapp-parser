@@ -2,14 +2,30 @@
 from __future__ import division
 from datetime import datetime
 import codecs
-import date
+import datelib
 import re
 import operator
 import sys
 import json
 import csv
+import argparse
 from parsers import whatsapp
 from parsers import facebook
+
+
+def pretty_print(dic, parent, depth):
+    tup = sorted(dic.iteritems(), key=operator.itemgetter(1))
+    isLeaf = True
+    for key in tup:
+        if isinstance(dic[key[0]], dict):
+            isLeaf = False
+    if isLeaf and depth != 0:
+        print " " * (depth - 1) * 2, parent
+    for key in tup:
+        if isinstance(dic[key[0]], dict):
+            pretty_print(dic[key[0]], key[0], depth + 1)
+        else:
+            print " " * depth * 2, str(key[0]), "->", dic[key[0]]
 
 
 class ChatFeatures():
@@ -23,11 +39,11 @@ class ChatFeatures():
         self.contact_initiations   = 0
         self.weekday               = {}
         self.shifts                = {}
-        self.pattern               = {}
+        self.patterns              = {}
         self.proportions           = {}
         self.most_used_words       = {}
 
-    def compute_response_time_and_burst(self, list_of_messages, root_name, initiation_thrs=(60*60*8)):
+    def compute_response_time_and_burst(self, list_of_messages, root_name, initiation_thrs=(60*60*8), burst_thrs=3):
         # perform the operations that are dependant on multiple messages
         # (response time, bursts)
         t0 = list_of_messages[0].datetime_obj
@@ -52,13 +68,15 @@ class ChatFeatures():
                 if message.sender == root_name:
                     # store the burst count for the last sender, which is the
                     # opposite of current
-                    self.contact_burst.append(burst_count)
+                    if burst_count > burst_thrs:
+                        self.contact_burst.append(burst_count)
                     self.root_response_time.append(dt.seconds)
                 # is sender the contact?
                 else:
                     # store the burst count for the last sender, which is the
                     # opposite of current
-                    self.root_burst.append(burst_count)
+                    if burst_count > burst_thrs:
+                        self.root_burst.append(burst_count)
                     self.contact_response_time.append(dt.seconds)
                 
                 # End of the first burst, restart the counter
@@ -74,7 +92,7 @@ class ChatFeatures():
     def compute_messages_per_weekday(self, list_of_messages):
         self.weekday = {}
         for msg in list_of_messages:
-            weekday = date.date_to_weekday(msg.date)
+            weekday = datelib.date_to_weekday(msg.date)
             if weekday not in self.weekday:
                 self.weekday[weekday] = 1
             else:
@@ -104,12 +122,12 @@ class ChatFeatures():
         return self.shifts
 
     def compute_messages_pattern(self, list_of_messages, senders, pattern_list):
-        self.pattern = {}
+        self.patterns = {}
         regexes = {}
         for pattern in pattern_list:
-            self.pattern[pattern] = {}
+            self.patterns[pattern] = {}
             for sender in senders:
-                self.pattern[pattern][sender] = 0
+                self.patterns[pattern][sender] = 0
             # re=regular expression, .I = ignore case, .compile = convert to object
             regexes[pattern] = re.compile(re.escape(pattern), re.I)
         for msg in list_of_messages:
@@ -117,12 +135,12 @@ class ChatFeatures():
                 search_result = regexes[pattern].findall(msg.content)
                 length = len(search_result)
                 if length > 0:
-                    if pattern not in self.pattern:
-                        self.pattern[pattern][msg.sender] = length
+                    if pattern not in self.patterns:
+                        self.patterns[pattern][msg.sender] = length
                         print "This should never happen"
                     else:
-                        self.pattern[pattern][msg.sender] += length
-        return self.pattern
+                        self.patterns[pattern][msg.sender] += length
+        return self.patterns
 
     def compute_message_proportions(self, list_of_messages, senders):
         total = 0
@@ -170,7 +188,6 @@ class ChatFeatures():
 
         return self.proportions
 
-
     def compute_most_used_words(self, list_of_messages, top=10, threshold=3):
         words_counter = {}
         self.most_used_words = {}
@@ -188,6 +205,7 @@ class ChatFeatures():
         sorted_words = sorted(words_counter.iteritems(), key=operator.itemgetter(1), reverse=True)
         self.most_used_words = sorted_words[:top]
         return self.most_used_words
+
 
 class Chat():
 
@@ -229,23 +247,73 @@ class Chat():
             p = facebook.ParserFacebook(self.raw_messages)
             self.senders, self.messages = p.parse()
 
-    def response_time_and_burst(self):
-        print "Root is ", self.senders[0]
-        self.features.compute_response_time_and_burst(self.messages, self.senders[0])
+    def response_time_and_burst(self, root=None):
+        if root is None:
+            print "Root is ", self.senders[0]
+            return self.features.compute_response_time_and_burst(self.messages, self.senders[0])
+        else:
+            return self.features.compute_response_time_and_burst(self.messages, root)
+
+    def messages_per_weekday(self):
+        return self.features.compute_messages_per_weekday(self.messages)
+
+    def messages_per_shift(self):
+        return self.features.compute_messages_per_shift(self.messages)
+
+    def messages_pattern(self):
+        return self.features.compute_messages_pattern(self.messages, self.senders, self.patterns)
+
+    def message_proportions(self):
+        return self.features.compute_message_proportions(self.messages, self.senders)
+
+    def most_used_words(self):
+        return self.features.compute_most_used_words(self.messages, 10, 3)
+    
+    def all_features(self, **kargs):
+        root_name = kargs.get("root_name", self.senders[0])
+        burst_thrs = kargs.get("burst_thrs", 3)
+        initiation_thrs = kargs.get("initiation_thrs", 60*60*8)
+        pattern_list = kargs.get("pattern_list", ["amor"])
+        top = kargs.get("top", 10)
+        word_length_threshold = kargs.get("word_length_threshold", 3)
+
+        self.features.compute_response_time_and_burst(self.messages, root_name, initiation_thrs, burst_thrs)
+        self.features.compute_messages_per_weekday(self.messages)
+        self.features.compute_messages_per_shift(self.messages)
+        self.features.compute_messages_pattern(self.messages, self.senders, pattern_list)
+        self.features.compute_message_proportions(self.messages, self.senders)
+        self.features.compute_most_used_words(self.messages, top, word_length_threshold)
+
+    def print_features(self):
+        print "Proportions:"
+        pretty_print(self.features.proportions, self.features.proportions.keys()[0], 1)
+        print ""
+        print "Weekdays:"
+        pretty_print(self.features.weekday, "Weekday", 0)
+        print ""
+        print "Shifts:"
+        pretty_print(self.features.shifts, "Shifts", 0)
+        print ""
+        print "Patterns:"
+        pretty_print(self.features.patterns, "Patterns", 0)
+        print ""
+        print "Most used words:"
+        for muw in self.features.most_used_words:
+            print muw[0]
+
+
+
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print "ERROR: python app.py <chat_log> <WhatsApp|Facebook>"
-        sys.exit(-1)
+    parser = argparse.ArgumentParser(description='Chatlog Feature Extractor')
+    parser.add_argument('-f', '--file', help='Chatlog file', required=True)
+    parser.add_argument('-p', '--platform', help='Platform', choices=["WhatsApp", "Facebook"], required=True)
+    parser.add_argument('-r', '--regexes', help='Regex patterns to compute frequency', nargs="+", required=False, default=[])
 
-    options = ["WhatsApp", "Facebook"]
-    if sys.argv[2] not in options:
-        print "ERROR: Please choose one:"
-        for o in options:
-            print o
-        sys.exit(-1)
+    args = vars(parser.parse_args())
 
-    c = Chat(sys.argv[1], sys.argv[2])
+    c = Chat(args["file"], args["platform"])
     c.open_file()
     c.parse_messages()
-    c.response_time_and_burst()
+    c.all_features()
+    c.print_features()
