@@ -206,6 +206,27 @@ class ChatFeatures():
         self.most_used_words = sorted_words[:top]
         return self.most_used_words
 
+    def compute_avg_root_response_time(self):
+        return sum(self.root_response_time)/len(self.root_response_time)
+
+    def compute_avg_contact_response_time(self):
+        return sum(self.contact_response_time)/len(self.contact_response_time)
+
+    def compute_nbr_root_burst(self):
+        return len(self.root_burst)
+    
+    def compute_nbr_contact_burst(self):
+        return len(self.contact_burst)
+
+    def compute_avg_root_burst(self):
+        return sum(self.root_burst)/len(self.root_burst)
+
+    def compute_avg_contact_burst(self):
+        return sum(self.contact_burst)/len(self.contact_burst)
+
+    def compute_root_initation_ratio(self):
+        return self.root_initiations / self.contact_initiations
+
 
 class Chat():
 
@@ -285,6 +306,26 @@ class Chat():
         self.features.compute_most_used_words(self.messages, top, word_length_threshold)
 
     def print_features(self):
+        print "Root: %s" % (self.senders[0])
+        print ""
+
+        print "Average root response time (s): %.2f" % (self.features.compute_avg_root_response_time())
+        print "Average contact response time (s): %.2f" % (self.features.compute_avg_contact_response_time())
+        print ""
+
+        print "Number of root bursts: %d" % (self.features.compute_nbr_root_burst())
+        print "Average burst length: %.2ff" % (self.features.compute_avg_root_burst())
+        print ""
+
+        print "Number of contact bursts: %d" % (self.features.compute_nbr_contact_burst())
+        print "Average burst length: %.2ff" % (self.features.compute_avg_contact_burst())
+        print ""
+
+        print "Root initiations: %d" % (self.features.root_initiations)
+        print "Contact initiations: %d" % (self.features.contact_initiations)
+        print "Root initiation ratio: %.2f" % (self.features.compute_root_initation_ratio())
+        print ""
+
         print "Proportions:"
         pretty_print(self.features.proportions, self.features.proportions.keys()[0], 1)
         print ""
@@ -301,6 +342,32 @@ class Chat():
         for muw in self.features.most_used_words:
             print muw[0]
 
+    def save_features(self, output_name):
+        import pprint
+        output = {}
+        output["root"] = self.senders[0]
+        output["avg_root_response_time"] = self.features.compute_avg_root_response_time()
+        output["avg_contact_response_time"] = self.features.compute_avg_contact_response_time()
+        output["nbr_root_burst"] = self.features.compute_nbr_root_burst()
+        output["nbr_contact_burst"] = self.features.compute_nbr_contact_burst()
+        output["avg_root_burst"] = self.features.compute_avg_root_burst()
+        output["avg_contact_burst"] = self.features.compute_avg_contact_burst()
+        output["root_initiations"] = self.features.root_initiations
+        output["contact_initiations"] = self.features.contact_initiations
+        output["root_iniation_ratio"] = self.features.compute_root_initation_ratio()
+        output["proportions"] = self.features.proportions
+        output["weekdays"] = self.features.weekday
+        output["shifts"] = self.features.shifts
+        output["patterns"] = self.features.patterns
+        output["muw"] = self.features.most_used_words
+        if output_name.endswith(".json"):
+            arq = open(output_name, "w")
+        else:
+            arq = open(output_name+".json", "w")
+        arq.write(json.dumps(output))
+        pprint.pprint(output)
+        arq.close()
+
 
 
 
@@ -309,6 +376,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--file', help='Chatlog file', required=True)
     parser.add_argument('-p', '--platform', help='Platform', choices=["WhatsApp", "Facebook"], required=True)
     parser.add_argument('-r', '--regexes', help='Regex patterns to compute frequency', nargs="+", required=False, default=[])
+    parser.add_argument('-o', '--output', help='JSON output fiel name', required=False, default="./logs/basic_stats.json")
 
     args = vars(parser.parse_args())
 
@@ -317,3 +385,4 @@ if __name__ == "__main__":
     c.parse_messages()
     c.all_features()
     c.print_features()
+    c.save_features(args["output"])
