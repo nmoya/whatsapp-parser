@@ -1,6 +1,5 @@
 from datetime import datetime
 import message
-import calendar
 
 ''' A line can be either: 
         09/12/2012 17:03:48: Sender Name: Message

@@ -207,10 +207,14 @@ class ChatFeatures():
         return self.most_used_words
 
     def compute_avg_root_response_time(self):
-        return sum(self.root_response_time)/len(self.root_response_time)
+        if (len(self.root_response_time) != 0):
+            return sum(self.root_response_time)/len(self.root_response_time)
+        return 0
 
     def compute_avg_contact_response_time(self):
-        return sum(self.contact_response_time)/len(self.contact_response_time)
+        if (len(self.contact_response_time) != 0):
+            return sum(self.contact_response_time)/len(self.contact_response_time)
+        return 0
 
     def compute_nbr_root_burst(self):
         return len(self.root_burst)
@@ -219,32 +223,35 @@ class ChatFeatures():
         return len(self.contact_burst)
 
     def compute_avg_root_burst(self):
-        return sum(self.root_burst)/len(self.root_burst)
+        if (len(self.root_burst) != 0):
+            return sum(self.root_burst)/len(self.root_burst)
+        return 0
 
     def compute_avg_contact_burst(self):
-        return sum(self.contact_burst)/len(self.contact_burst)
+        if (len(self.contact_burst) != 0):
+            return sum(self.contact_burst)/len(self.contact_burst)
+        return 0
 
     def compute_root_initation_ratio(self):
-        return self.root_initiations / self.contact_initiations
+        if (self.contact_initiations != 0):
+            return self.root_initiations / self.contact_initiations
+        return 0
 
 
 class Chat():
 
-    def __init__(self, filename, platform="Facebook", _string=False):
+    def __init__(self, filename, platform="Facebook"):
         self.filename            = filename
         self.platform            = platform
         self.raw_messages        = []
         self.messages            = []     # List of Messages objects
         self.features            = ChatFeatures() # Chat Features object
         self.senders             = []
-        if _string:
-            if platform == "Facebook":
-                self.open_file = self.open_file_string_facebook
-        else:
-            if platform == "WhatsApp":
-                self.open_file = self.open_file_whatsapp
-            elif platform == "Facebook":
-                self.open_file = self.open_file_facebook_json
+
+        if platform == "WhatsApp":
+            self.open_file = self.open_file_whatsapp
+        elif platform == "Facebook":
+            self.open_file = self.open_file_facebook_json
 
     def open_file_whatsapp(self):
         arq = codecs.open(self.filename, "r", "utf-8-sig")
@@ -259,14 +266,10 @@ class Chat():
         arq = codecs.open(self.filename, "r", "utf-8-sig")
         content = arq.read()
         arq.close()
-        lines = content.split("\n")
-        lines = [l for l in lines if len(l) != 1]
+        dicts = json.loads(content)
+        lines = dicts["data"]
         for l in lines:
-            self.raw_messages.append(l.encode("utf-8"))
-
-    def open_file_string_facebook(self):
-        dicts = json.loads(self.filename)
-        print dicts
+            self.raw_messages.append(l)
 
     def parse_messages(self):
         if self.platform == "WhatsApp":
@@ -348,7 +351,10 @@ class Chat():
         print ""
         print "Most used words:"
         for muw in self.features.most_used_words:
-            print muw[0]
+            try: 
+                print muw[0]
+            except UnicodeEncodeError:
+                self.features.most_used_words.remove(muw)
 
     def save_features(self, output_name):
         import pprint
@@ -381,18 +387,14 @@ class Chat():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chatlog Feature Extractor')
+    parser.add_argument('-f', '--file', help='Chatlog file', required=True)
     parser.add_argument('-p', '--platform', help='Platform', choices=["WhatsApp", "Facebook"], required=True)
-    parser.add_argument('-f', '--file', help='Chatlog file', required=False)
     parser.add_argument('-r', '--regexes', help='Regex patterns to compute frequency', nargs="+", required=False, default=[])
     parser.add_argument('-o', '--output', help='JSON output file name', required=False, default="./logs/basic_stats.json")
-    parser.add_argument('-s', '--string', help='Receive the chat as string', required=False, default=False)
 
     args = vars(parser.parse_args())
 
-    if args["string"] is not False:
-        c = Chat(args["string"], args["platform"], _string=True)
-    else:
-        c = Chat(args["file"], args["platform"])
+    c = Chat(args["file"], args["platform"])
     c.open_file()
     c.parse_messages()
     c.all_features()
