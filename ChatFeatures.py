@@ -1,32 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from datetime import datetime
-import codecs
 import datelib
 import re
 import operator
-import sys
-import json
-import csv
-import argparse
-from parsers import whatsapp
-from parsers import facebook
-
-
-def pretty_print(dic, parent, depth):
-    tup = sorted(dic.iteritems(), key=operator.itemgetter(1))
-    isLeaf = True
-    for key in tup:
-        if isinstance(dic[key[0]], dict):
-            isLeaf = False
-    if isLeaf and depth != 0:
-        print " " * (depth - 1) * 2, parent
-    for key in tup:
-        if isinstance(dic[key[0]], dict):
-            pretty_print(dic[key[0]], key[0], depth + 1)
-        else:
-            print " " * depth * 2, str(key[0]), "->", dic[key[0]]
-
 
 class ChatFeatures():
 
@@ -35,17 +10,19 @@ class ChatFeatures():
         self.contact_response_time = []
         self.root_burst            = []
         self.contact_burst         = []
-        self.root_initiations      = 0
-        self.contact_initiations   = 0
+        self.initiations           = {}
         self.weekday               = {}
         self.shifts                = {}
         self.patterns              = {}
         self.proportions           = {}
         self.most_used_words       = {}
 
-    def compute_response_time_and_burst(self, list_of_messages, root_name, initiation_thrs=(60*60*8), burst_thrs=3):
+    def compute_response_time_and_burst(self, list_of_messages, root_name, senders, initiation_thrs=(60*60*8), burst_thrs=3):
         # perform the operations that are dependant on multiple messages
         # (response time, bursts)
+        self.initiations = {}
+        for s in senders:
+            self.initiations[s] = 0
         t0 = list_of_messages[0].datetime_obj
         burst_count = 1
         for index, message in enumerate(list_of_messages):
@@ -59,10 +36,7 @@ class ChatFeatures():
                 # sender changed, store the burst count and reset
                 # print "sender changed: %s" % ( message.sender )
                 if (dt.seconds > initiation_thrs):
-                    if message.sender == root_name:
-                        self.root_initiations += 1
-                    else:
-                        self.contact_initiations += 1
+                    self.initiations[message.sender] += 1
                 #print("response time: %d\n" %(dt.seconds) )
                 # is sender the root?
                 if message.sender == root_name:
@@ -232,171 +206,7 @@ class ChatFeatures():
             return sum(self.contact_burst)/len(self.contact_burst)
         return 0
 
-    def compute_root_initation_ratio(self):
-        if (self.contact_initiations != 0):
-            return self.root_initiations / self.contact_initiations
+    def compute_root_initation_ratio(self, root, contact):
+        if (self.initiations[contact] != 0):
+            return self.initiations[root] / self.initiations[contact]
         return 0
-
-
-class Chat():
-
-    def __init__(self, filename, platform="Facebook"):
-        self.filename            = filename
-        self.platform            = platform
-        self.raw_messages        = []
-        self.messages            = []     # List of Messages objects
-        self.features            = ChatFeatures() # Chat Features object
-        self.senders             = []
-
-        if platform == "WhatsApp":
-            self.open_file = self.open_file_whatsapp
-        elif platform == "Facebook":
-            self.open_file = self.open_file_facebook_json
-
-    def open_file_whatsapp(self):
-        arq = codecs.open(self.filename, "r", "utf-8-sig")
-        content = arq.read()
-        arq.close()
-        lines = content.split("\n")
-        lines = [l for l in lines if len(l) != 1]
-        for l in lines:
-            self.raw_messages.append(l.encode("utf-8"))
-
-    def open_file_facebook_json(self):
-        arq = codecs.open(self.filename, "r", "utf-8-sig")
-        content = arq.read()
-        arq.close()
-        dicts = json.loads(content)
-        lines = dicts["data"]
-        for l in lines:
-            self.raw_messages.append(l)
-
-    def parse_messages(self):
-        if self.platform == "WhatsApp":
-            p = whatsapp.ParserWhatsapp(self.raw_messages)
-            self.senders, self.messages = p.parse()
-        elif self.platform == "Facebook":
-            p = facebook.ParserFacebook(self.raw_messages)
-            self.senders, self.messages = p.parse()
-
-    def response_time_and_burst(self, root=None):
-        if root is None:
-            print "Root is ", self.senders[0]
-            return self.features.compute_response_time_and_burst(self.messages, self.senders[0])
-        else:
-            return self.features.compute_response_time_and_burst(self.messages, root)
-
-    def messages_per_weekday(self):
-        return self.features.compute_messages_per_weekday(self.messages)
-
-    def messages_per_shift(self):
-        return self.features.compute_messages_per_shift(self.messages)
-
-    def messages_pattern(self):
-        return self.features.compute_messages_pattern(self.messages, self.senders, self.patterns)
-
-    def message_proportions(self):
-        return self.features.compute_message_proportions(self.messages, self.senders)
-
-    def most_used_words(self):
-        return self.features.compute_most_used_words(self.messages, 10, 3)
-    
-    def all_features(self, **kargs):
-        root_name = kargs.get("root_name", self.senders[0])
-        burst_thrs = kargs.get("burst_thrs", 3)
-        initiation_thrs = kargs.get("initiation_thrs", 60*60*8)
-        pattern_list = kargs.get("pattern_list", ["amor"])
-        top = kargs.get("top", 10)
-        word_length_threshold = kargs.get("word_length_threshold", 3)
-
-        self.features.compute_response_time_and_burst(self.messages, root_name, initiation_thrs, burst_thrs)
-        self.features.compute_messages_per_weekday(self.messages)
-        self.features.compute_messages_per_shift(self.messages)
-        self.features.compute_messages_pattern(self.messages, self.senders, pattern_list)
-        self.features.compute_message_proportions(self.messages, self.senders)
-        self.features.compute_most_used_words(self.messages, top, word_length_threshold)
-
-    def print_features(self):
-        print "Root: %s" % (self.senders[0])
-        print ""
-
-        print "Average root response time (s): %.2f" % (self.features.compute_avg_root_response_time())
-        print "Average contact response time (s): %.2f" % (self.features.compute_avg_contact_response_time())
-        print ""
-
-        print "Number of root bursts: %d" % (self.features.compute_nbr_root_burst())
-        print "Average burst length: %.2ff" % (self.features.compute_avg_root_burst())
-        print ""
-
-        print "Number of contact bursts: %d" % (self.features.compute_nbr_contact_burst())
-        print "Average burst length: %.2ff" % (self.features.compute_avg_contact_burst())
-        print ""
-
-        print "Root initiations: %d" % (self.features.root_initiations)
-        print "Contact initiations: %d" % (self.features.contact_initiations)
-        print "Root initiation ratio: %.2f" % (self.features.compute_root_initation_ratio())
-        print ""
-
-        print "Proportions:"
-        pretty_print(self.features.proportions, self.features.proportions.keys()[0], 1)
-        print ""
-        print "Weekdays:"
-        pretty_print(self.features.weekday, "Weekday", 0)
-        print ""
-        print "Shifts:"
-        pretty_print(self.features.shifts, "Shifts", 0)
-        print ""
-        print "Patterns:"
-        pretty_print(self.features.patterns, "Patterns", 0)
-        print ""
-        print "Most used words:"
-        for muw in self.features.most_used_words:
-            try: 
-                print muw[0]
-            except UnicodeEncodeError:
-                self.features.most_used_words.remove(muw)
-
-    def save_features(self, output_name):
-        import pprint
-        output = {}
-        output["root"] = self.senders[0]
-        output["avg_root_response_time"] = self.features.compute_avg_root_response_time()
-        output["avg_contact_response_time"] = self.features.compute_avg_contact_response_time()
-        output["nbr_root_burst"] = self.features.compute_nbr_root_burst()
-        output["nbr_contact_burst"] = self.features.compute_nbr_contact_burst()
-        output["avg_root_burst"] = self.features.compute_avg_root_burst()
-        output["avg_contact_burst"] = self.features.compute_avg_contact_burst()
-        output["root_initiations"] = self.features.root_initiations
-        output["contact_initiations"] = self.features.contact_initiations
-        output["root_iniation_ratio"] = self.features.compute_root_initation_ratio()
-        output["proportions"] = self.features.proportions
-        output["weekdays"] = self.features.weekday
-        output["shifts"] = self.features.shifts
-        output["patterns"] = self.features.patterns
-        output["muw"] = self.features.most_used_words
-        if output_name.endswith(".json"):
-            arq = open(output_name, "w")
-        else:
-            arq = open(output_name+".json", "w")
-        arq.write(json.dumps(output))
-        pprint.pprint(output)
-        arq.close()
-
-
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Chatlog Feature Extractor')
-    parser.add_argument('-f', '--file', help='Chatlog file', required=True)
-    parser.add_argument('-p', '--platform', help='Platform', choices=["WhatsApp", "Facebook"], required=True)
-    parser.add_argument('-r', '--regexes', help='Regex patterns to compute frequency', nargs="+", required=False, default=[])
-    parser.add_argument('-o', '--output', help='JSON output file name', required=False, default="./logs/basic_stats.json")
-
-    args = vars(parser.parse_args())
-
-    c = Chat(args["file"], args["platform"])
-    c.open_file()
-    c.parse_messages()
-    c.all_features()
-    c.print_features()
-    c.save_features(args["output"])
