@@ -86,7 +86,7 @@ class Chat():
         return self.features.compute_messages_pattern(self.messages, self.senders, self.patterns)
 
     def message_proportions(self):
-        return self.features.compute_message_proportions(self.messages, self.senders)
+        return self.features.compute_message_proportions(self.messages, self.senders, self.root, self.get_contact())
 
     def most_used_words(self):
         return self.features.compute_most_used_words(self.messages, 10, 3)
@@ -102,7 +102,7 @@ class Chat():
         self.features.compute_messages_per_weekday(self.messages)
         self.features.compute_messages_per_shift(self.messages)
         self.features.compute_messages_pattern(self.messages, self.senders, pattern_list)
-        self.features.compute_message_proportions(self.messages, self.senders)
+        self.features.compute_message_proportions(self.messages, self.senders, self.root, self.get_contact())
         self.features.compute_most_used_words(self.messages, top, word_length_threshold)
 
     def print_features(self):
@@ -175,7 +175,7 @@ class Chat():
                 output["avg_bursts"][s] = self.features.compute_avg_contact_burst()
 
         output["initiations"] = self.features.initiations
-        output["initiations"]["root_iniation_ratio"] = self.features.compute_root_initation_ratio(self.root, self.get_contact())
+        output["initiations"]["root_initiation_ratio"] = self.features.compute_root_initation_ratio(self.root, self.get_contact())
         output["proportions"] = self.features.proportions
         output["weekdays"] = self.features.weekday
         output["shifts"] = self.features.shifts

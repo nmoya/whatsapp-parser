@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import datelib
 import re
 import operator
@@ -116,10 +117,11 @@ class ChatFeatures():
                         self.patterns[pattern][msg.sender] += length
         return self.patterns
 
-    def compute_message_proportions(self, list_of_messages, senders):
+    def compute_message_proportions(self, list_of_messages, senders, root, contact):
         total = 0
         self.proportions = {}
-        for i in ["messages", "words", "chars", "qmarks", "exclams", "media"]:
+        categories = ["messages", "words", "chars", "qmarks", "exclams", "media"]
+        for i in categories:
             self.proportions[i] = {}
             for s in senders:
                 self.proportions[i][s] = 0
@@ -142,23 +144,21 @@ class ChatFeatures():
                 msg.content.count('Sticker')
             )
             total += 1
-        self.proportions["total_messages"] = 0
-        self.proportions["total_words"]    = 0
-        self.proportions["total_chars"]    = 0
-        self.proportions["total_qmarks"]   = 0
-        self.proportions["total_exclams"]  = 0
-        self.proportions["total_media"]    = 0
 
         self.proportions["avg_words"] = {}
-
         for s in senders:
-            self.proportions["total_messages"] += self.proportions["messages"][s]
-            self.proportions["total_words"] += self.proportions["words"][s]
-            self.proportions["total_chars"] += self.proportions["chars"][s]
-            self.proportions["total_qmarks"] += self.proportions["qmarks"][s]
-            self.proportions["total_exclams"] += self.proportions["exclams"][s]
-            self.proportions["total_media"] += self.proportions["media"][s]
             self.proportions["avg_words"][s] = self.proportions["words"][s] / self.proportions["messages"][s]
+
+        for c in categories:
+            self.proportions[c]["total"] = 0
+            if self.proportions[c][contact] != 0:
+                self.proportions[c]["ratio"] = self.proportions[c][root] / self.proportions[c][contact]
+            else:
+                self.proportions[c]["ratio"] = 0
+
+        for c in categories:
+            for s in senders:
+                self.proportions[c]["total"] += self.proportions[c][s]
 
         return self.proportions
 
