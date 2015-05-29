@@ -111,14 +111,16 @@ class Chat():
 
         print "Average root response time (s): %.2f" % (self.features.compute_avg_root_response_time())
         print "Average contact response time (s): %.2f" % (self.features.compute_avg_contact_response_time())
+        print "Ratio: %.2f" % (self.features.compute_response_time_ratio(self.root, self.get_contact()))
         print ""
 
-        print "Number of root bursts: %d" % (self.features.compute_nbr_root_burst())
-        print "Average burst length: %.2ff" % (self.features.compute_avg_root_burst())
-        print ""
+        # print "Number of root bursts: %d" % (self.features.compute_nbr_root_burst())
+        # print "Average burst length: %.2ff" % (self.features.compute_avg_root_burst())
+        # print ""
 
         print "Number of contact bursts: %d" % (self.features.compute_nbr_contact_burst())
         print "Average burst length: %.2ff" % (self.features.compute_avg_contact_burst())
+        print "Ratio: %.2f" % (self.features.compute_bursts_ratio(self.root, self.get_contact()))
         print ""
 
         for s in self.senders:
@@ -159,6 +161,7 @@ class Chat():
                 output["avg_response_time"][s] = self.features.compute_avg_root_response_time()
             else:
                 output["avg_response_time"][s] = self.features.compute_avg_contact_response_time()
+        output["avg_response_time"]["ratio"] = self.features.compute_response_time_ratio(self.root, self.get_contact())
 
         output["nbr_bursts"] = {}
         for s in self.senders:
@@ -166,13 +169,15 @@ class Chat():
                 output["nbr_bursts"][s] = self.features.compute_nbr_root_burst()
             else:
                 output["nbr_bursts"][s] = self.features.compute_nbr_contact_burst()
+        output["nbr_bursts"]["ratio"] = self.features.compute_bursts_ratio(self.root, self.get_contact())
 
-        output["avg_bursts"] = {}
-        for s in self.senders:
-            if s == self.root:
-                output["avg_bursts"][s] = self.features.compute_avg_root_burst()
-            else:
-                output["avg_bursts"][s] = self.features.compute_avg_contact_burst()
+        # output["avg_bursts"] = {}
+        # for s in self.senders:
+        #     if s == self.root:
+        #         output["avg_bursts"][s] = self.features.compute_avg_root_burst()
+        #     else:
+        #         output["avg_bursts"][s] = self.features.compute_avg_contact_burst()
+
 
         output["initiations"] = self.features.initiations
         output["initiations"]["root_initiation_ratio"] = self.features.compute_root_initation_ratio(self.root, self.get_contact())

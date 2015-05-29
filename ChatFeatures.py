@@ -148,6 +148,7 @@ class ChatFeatures():
         self.proportions["avg_words"] = {}
         for s in senders:
             self.proportions["avg_words"][s] = self.proportions["words"][s] / self.proportions["messages"][s]
+        self.proportions["avg_words"]["ratio"] = self.proportions["avg_words"][root] / self.proportions["avg_words"][contact]
 
         for c in categories:
             self.proportions[c]["total"] = 0
@@ -190,16 +191,28 @@ class ChatFeatures():
             return sum(self.contact_response_time)/len(self.contact_response_time)
         return 0
 
+    def compute_response_time_ratio(self, root, contact):
+        avg_root = self.compute_avg_root_response_time()
+        avg_contact = self.compute_avg_contact_response_time()
+        if (avg_contact != 0):
+            return avg_root / avg_contact
+        return 0
+
+    def compute_bursts_ratio(self, root, contact):
+        if (len(self.contact_burst) != 0):
+            return len(self.root_burst) / len(self.contact_burst)
+        return 0
+
     def compute_nbr_root_burst(self):
         return len(self.root_burst)
     
     def compute_nbr_contact_burst(self):
         return len(self.contact_burst)
 
-    def compute_avg_root_burst(self):
-        if (len(self.root_burst) != 0):
-            return sum(self.root_burst)/len(self.root_burst)
-        return 0
+    # def compute_avg_root_burst(self):
+    #     if (len(self.root_burst) != 0):
+    #         return sum(self.root_burst)/len(self.root_burst)
+    #     return 0
 
     def compute_avg_contact_burst(self):
         if (len(self.contact_burst) != 0):
