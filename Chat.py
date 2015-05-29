@@ -94,7 +94,7 @@ class Chat():
     def all_features(self, **kargs):
         burst_thrs = kargs.get("burst_thrs", 3)
         initiation_thrs = kargs.get("initiation_thrs", 60*60*8)
-        pattern_list = kargs.get("pattern_list", ["amor"])
+        pattern_list = kargs.get("pattern_list", [])
         top = kargs.get("top", 10)
         word_length_threshold = kargs.get("word_length_threshold", 3)
 
