@@ -94,11 +94,12 @@ class Chat():
     def all_features(self, **kargs):
         burst_thrs = kargs.get("burst_thrs", 3)
         initiation_thrs = kargs.get("initiation_thrs", 60*60*8)
+        response_thrs = kargs.get("response_thrs", 60*60*3)
         pattern_list = kargs.get("pattern_list", [])
         top = kargs.get("top", 10)
         word_length_threshold = kargs.get("word_length_threshold", 3)
 
-        self.features.compute_response_time_and_burst(self.messages, self.root, self.senders, initiation_thrs, burst_thrs)
+        self.features.compute_response_time_and_burst(self.messages, self.root, self.senders, initiation_thrs, burst_thrs, response_thrs)
         self.features.compute_messages_per_weekday(self.messages)
         self.features.compute_messages_per_shift(self.messages)
         self.features.compute_messages_pattern(self.messages, self.senders, pattern_list)

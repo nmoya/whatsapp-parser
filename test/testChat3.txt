@@ -1,0 +1,10 @@
+09/12/2012 17:02:35: UsernameOne: Hello, world.
+09/12/2012 17:03:35: UsernameTwo: response Time with media <media omitted>
+09/12/2012 17:07:35: UsernameOne: Test messg with response Time????
+09/12/2012 17:07:36: UsernameOne: Test messg
+09/12/2012 17:07:37: UsernameOne: Test messg
+09/12/2012 17:09:37: UsernameTwo: Test Burst 2 with response Time
+09/12/2012 17:09:38: UsernameTwo: Test Burst 2
+09/12/2012 17:09:39: UsernameTwo: Test Burst 2
+11/12/2012 10:04:35: UsernameTwo: Test Initiation with exclam!!!
+18/12/2012 10:04:36: UsernameOne: Test long reply = initiation!

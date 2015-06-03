@@ -18,7 +18,7 @@ class ChatFeatures():
         self.proportions           = {}
         self.most_used_words       = {}
 
-    def compute_response_time_and_burst(self, list_of_messages, root_name, senders, initiation_thrs=(60*60*8), burst_thrs=3):
+    def compute_response_time_and_burst(self, list_of_messages, root_name, senders, initiation_thrs=(60*60*8), burst_thrs=3, response_thrs=(60*60*3)):
         # perform the operations that are dependant on multiple messages
         # (response time, bursts)
         self.initiations = {}
@@ -33,11 +33,15 @@ class ChatFeatures():
             t1 = message.datetime_obj
             dt = t1 - t0
 
+            print "sender %s delta %s" % ( message.sender, dt.seconds )
+            if (dt.seconds > initiation_thrs):
+                self.initiations[message.sender] += 1
+
             # is sender the same as the last message?
             if message.sender != list_of_messages[index-1].sender:
                 # sender changed, store the burst count and reset
-                print "sender changed: %s" % ( message.sender )
-                print "burst count: %s" % ( burst_count )
+                #print "sender changed: %s" % ( message.sender )
+                #print "burst count: %s" % ( burst_count )
 
                 #print("response time: %d\n" %(dt.seconds) )
                 # is sender the root?
@@ -47,7 +51,8 @@ class ChatFeatures():
                     if burst_count > burst_thrs:
                         #print "BURST CONTACT ENDED: %s IN A ROW" % ( burst_count )
                         self.contact_burst.append(burst_count)
-                    self.root_response_time.append(dt.seconds)
+                    if dt.seconds < response_thrs:
+                        self.root_response_time.append(dt.seconds)
                 # is sender the contact?
                 else:
                     # store the burst count for the last sender, which is the
@@ -55,7 +60,8 @@ class ChatFeatures():
                     if burst_count > burst_thrs:
                         #print "BURST ROOT ENDED: %s IN A ROW" % ( burst_count )
                         self.root_burst.append(burst_count)
-                    self.contact_response_time.append(dt.seconds)
+                    if dt.seconds < response_thrs:
+                        self.contact_response_time.append(dt.seconds)
                 
                 # End of the first burst, restart the counter
                 burst_count = 1
@@ -237,7 +243,7 @@ class ChatFeatures():
         if (self.initiations[contact] == 0):
             return self.initiations[root]/1
         if (self.initiations[root] == 0):
-            return 1/self.initiations[root] 
+            return 1/self.initiations[contact] 
         return self.initiations[root] / self.initiations[contact]
         
     def generate_outcome(self, root, contact):
