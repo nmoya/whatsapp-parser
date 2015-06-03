@@ -79,7 +79,15 @@ class ChatFeatures():
                 self.contact_burst.append(burst_count)                
 
     def compute_messages_per_weekday(self, list_of_messages):
-        self.weekday = {}
+        self.weekday = {
+            "Sunday": 0,
+            "Monday": 0,
+            "Tuesday": 0,
+            "Wednesday": 0,
+            "Thursday": 0,
+            "Friday": 0,
+            "Saturday": 0
+        }
         for msg in list_of_messages:
             weekday = datelib.date_to_weekday(msg.date)
             if weekday not in self.weekday:
