@@ -32,9 +32,10 @@ class ChatFeatures():
                 continue
             t1 = message.datetime_obj
             dt = t1 - t0
+            dt.total_seconds()
 
-            print "sender %s delta %s" % ( message.sender, dt.seconds )
-            if (dt.seconds > initiation_thrs):
+            print "sender %s delta %s" % ( message.sender, dt.total_seconds() )
+            if (dt.total_seconds() > initiation_thrs):
                 self.initiations[message.sender] += 1
 
             # is sender the same as the last message?
@@ -43,7 +44,7 @@ class ChatFeatures():
                 #print "sender changed: %s" % ( message.sender )
                 #print "burst count: %s" % ( burst_count )
 
-                #print("response time: %d\n" %(dt.seconds) )
+                #print("response time: %d\n" %(dt.total_seconds()) )
                 # is sender the root?
                 if message.sender == root_name:
                     # store the burst count for the last sender, which is the
@@ -51,8 +52,8 @@ class ChatFeatures():
                     if burst_count > burst_thrs:
                         #print "BURST CONTACT ENDED: %s IN A ROW" % ( burst_count )
                         self.contact_burst.append(burst_count)
-                    if dt.seconds < response_thrs:
-                        self.root_response_time.append(dt.seconds)
+                    if dt.total_seconds() < response_thrs:
+                        self.root_response_time.append(dt.total_seconds())
                 # is sender the contact?
                 else:
                     # store the burst count for the last sender, which is the
@@ -60,8 +61,8 @@ class ChatFeatures():
                     if burst_count > burst_thrs:
                         #print "BURST ROOT ENDED: %s IN A ROW" % ( burst_count )
                         self.root_burst.append(burst_count)
-                    if dt.seconds < response_thrs:
-                        self.contact_response_time.append(dt.seconds)
+                    if dt.total_seconds() < response_thrs:
+                        self.contact_response_time.append(dt.total_seconds())
                 
                 # End of the first burst, restart the counter
                 burst_count = 1

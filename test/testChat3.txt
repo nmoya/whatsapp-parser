@@ -6,5 +6,5 @@
 09/12/2012 17:09:37: UsernameTwo: Test Burst 2 with response Time
 09/12/2012 17:09:38: UsernameTwo: Test Burst 2
 09/12/2012 17:09:39: UsernameTwo: Test Burst 2
-11/12/2012 10:04:35: UsernameTwo: Test Initiation with exclam!!!
-18/12/2012 10:04:36: UsernameOne: Test long reply = initiation!
+10/12/2012 11:04:35: UsernameTwo: Test Initiation with exclam!!!
+15/12/2012 10:04:37: UsernameOne: Test long reply = initiation!
