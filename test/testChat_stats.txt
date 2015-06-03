@@ -1,0 +1,81 @@
+{
+	"patterns": {
+		"response": {
+			"Username Two": 2,
+			"Username One": 1
+		}
+	},
+	"muw": [
+		["n\u00e3o", 1845],
+		["casa", 1363],
+		["mais", 890],
+		["hahaha", 842],
+		["sim", 816],
+		["muito", 795],
+		["amo", 780],
+		["isso", 777],
+		["para", 690],
+		["tudo", 586]
+	],
+	"shifts": {
+		"evening": 0,
+		"morning": 1,
+		"afternoon": 8,
+		"latenight": 0
+	},
+	"root": "Username One",
+	"proportions": {
+		"exclams": {
+			"Username One": 0,
+			"Username Two": 3
+		},
+		"total_media": 1,
+		"total_messages": 9,
+		"total_qmarks": 4,
+		"media": {
+			"Username One": 0,
+			"Username Two": 1
+		},
+		"chars": {
+			"Username One": 66,
+			"Username Two": 125
+		},
+		"total_words": 33,
+		"messages": {
+			"Username One": 4,
+			"Username Two": 5
+		},
+		"total_chars": 191,
+		"qmarks": {
+			"Username One": 4,
+			"Username Two": 0
+		},
+		"total_exclams": 3,
+		"words": {
+			"Username One": 11,
+			"Username Two": 22
+		},
+		"avg_words": {
+			"Username One": 2.5,
+			"Username Two": 4.4
+		}
+	},
+	"contact_initiations": 1,
+	"weekdays": {
+		"Monday": 0,
+		"Tuesday": 1,
+		"Friday": 0,
+		"Wednesday": 0,
+		"Thursday": 0,
+		"Sunday": 8,
+		"Saturday": 0
+	},
+	"root_iniation_ratio": 0,
+	"root_initiations": 0,
+	"nbr_contact_burst": 1,
+	"avg_contact_burst": 4,
+	"avg_root_burst": 3,
+	"nbr_root_burst": 0,
+	"avg_contact_response_time": 60,
+	"avg_root_response_time": 240
+}
