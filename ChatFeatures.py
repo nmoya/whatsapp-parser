@@ -27,6 +27,7 @@ class ChatFeatures():
         t0 = list_of_messages[0].datetime_obj
         burst_count = 1
         for index, message in enumerate(list_of_messages):
+            #skip the first message since we are looking at differences; note this means we don't count first msg as init
             if index == 0:
                 continue
             t1 = message.datetime_obj
@@ -35,15 +36,16 @@ class ChatFeatures():
             # is sender the same as the last message?
             if message.sender != list_of_messages[index-1].sender:
                 # sender changed, store the burst count and reset
-                # print "sender changed: %s" % ( message.sender )
-                if (dt.seconds > initiation_thrs):
-                    self.initiations[message.sender] += 1
+                print "sender changed: %s" % ( message.sender )
+                print "burst count: %s" % ( burst_count )
+
                 #print("response time: %d\n" %(dt.seconds) )
                 # is sender the root?
                 if message.sender == root_name:
                     # store the burst count for the last sender, which is the
                     # opposite of current
                     if burst_count > burst_thrs:
+                        #print "BURST CONTACT ENDED: %s IN A ROW" % ( burst_count )
                         self.contact_burst.append(burst_count)
                     self.root_response_time.append(dt.seconds)
                 # is sender the contact?
@@ -51,6 +53,7 @@ class ChatFeatures():
                     # store the burst count for the last sender, which is the
                     # opposite of current
                     if burst_count > burst_thrs:
+                        #print "BURST ROOT ENDED: %s IN A ROW" % ( burst_count )
                         self.root_burst.append(burst_count)
                     self.contact_response_time.append(dt.seconds)
                 
@@ -60,9 +63,13 @@ class ChatFeatures():
             else:
                 # accumulate the number of messages sent in a row
                 burst_count += 1
-                # if burst_count >= 3:
-                #     print"bursting: %d %s\n" % (burst_count, message.sender)
             t0 = t1
+        if burst_count > burst_thrs: #catch a burst if at end of chat
+            #print "final burst: %s" % ( burst_count )
+            if  message.sender == root_name:
+                self.root_burst.append(burst_count)
+            else:
+                self.contact_burst.append(burst_count)                
 
     def compute_messages_per_weekday(self, list_of_messages):
         self.weekday = {}
@@ -152,14 +159,19 @@ class ChatFeatures():
 
         for c in categories:
             self.proportions[c]["total"] = 0
-            if self.proportions[c][contact] != 0:
-                self.proportions[c]["ratio"] = self.proportions[c][root] / self.proportions[c][contact]
-            else:
-                self.proportions[c]["ratio"] = 0
-
-        for c in categories:
             for s in senders:
                 self.proportions[c]["total"] += self.proportions[c][s]
+        
+        for c in categories:
+         
+            #if a value is 0, replace with a 1 to avoid zero erros in ratio calcs.
+            if self.proportions[c][contact] == 0:
+                self.proportions[c][contact] = 1
+            if self.proportions[c][root] == 0:
+                self.proportions[c][root] = 1                
+
+            self.proportions[c]["ratio"] = self.proportions[c][root] / self.proportions[c][contact]
+
 
         return self.proportions
 
@@ -199,9 +211,11 @@ class ChatFeatures():
         return 0
 
     def compute_bursts_ratio(self, root, contact):
-        if (len(self.contact_burst) != 0):
-            return len(self.root_burst) / len(self.contact_burst)
-        return 0
+        if (len(self.contact_burst)) == 0:
+            return len(self.root_burst) / 1
+        if (len(self.root_burst) == 0):
+            return ( 1/len(self.contact_burst))
+        return len(self.root_burst)/len(self.contact_burst)
 
     def compute_nbr_root_burst(self):
         return len(self.root_burst)
@@ -220,6 +234,8 @@ class ChatFeatures():
         return 0
 
     def compute_root_initation_ratio(self, root, contact):
-        if (self.initiations[contact] != 0):
-            return self.initiations[root] / self.initiations[contact]
-        return 0
+        if (self.initiations[contact] == 0):
+            return self.initiations[root]/1
+        if (self.initiations[root] == 0):
+            return 1/self.initiations[root] 
+        return self.initiations[root] / self.initiations[contact]

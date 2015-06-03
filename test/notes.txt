@@ -1,0 +1,50 @@
+figure out how to run test file from command line
+double-check the output
+    -check accuracy
+    -make sure all the ratios are being calculated
+create the outcome states
+stuff the outcome states to the json
+handle name error: if root not in test file
+do not count the first character (space)
+implement the new ratio 'delta' methodology
+    x - for proportions
+    -not done yet for avg message 
+x  - adjust bursts to catch last one
+x - catch initiations regardless of whether sender changes
+
+fixes
+
+zero handling
+-if contact is not zero and root is zero-should not force to zero
+-new way to do ratios? delta as percent of total
+    messages
+    characters
+    qmarks
+    exclams
+    media
+    words
+    initiations
+
+
+accuracy
+
+YYYY initiations - fix (0/0 vs. 0/1)
+YYYY bursts
+YYYY response time - 240/60 vs. 240/90
+
+proportions
+ x exclams - forced to zero
+ x media - forced to zero
+ chars - 
+    70 vs. 66 for u1
+    130 vs. 125 for u2
+    probably due to spaces?
+ x messages
+ x qmarks - forced to zero
+ x words 
+ x weekdays
+ 
+x response time
+x shifts 
+x root
+x senders
