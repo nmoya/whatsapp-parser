@@ -37,6 +37,10 @@ def valid_date(date_str):
 
     return valid
 
+def date_diff(dateobj1, dateobj2):
+    import math
+    delta = dateobj2 - dateobj1
+    return int(math.fabs(delta.days))
 
 def datecmp(date1, date2):
     year, month, day = date_split(date1)
@@ -109,3 +113,6 @@ def weekday_portuguese_to_english(string):
         return "Friday"
     elif string == "sab" or string == "sabado":
         return "Saturday"
+
+if __name__ == "__main__":
+    print date_diff(datetime(2015, 6, 4), datetime(2015, 07, 7))
