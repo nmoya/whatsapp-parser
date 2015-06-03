@@ -135,7 +135,7 @@ class ChatFeatures():
         for msg in list_of_messages:
             self.proportions["messages"][msg.sender] += 1
             self.proportions["words"][msg.sender]    += len(msg.content.split(" "))
-            self.proportions["chars"][msg.sender]    += len(msg.content)
+            self.proportions["chars"][msg.sender]    += len(msg.content.strip())
             self.proportions["qmarks"][msg.sender]   += msg.content.count('?')
             self.proportions["exclams"][msg.sender]  += msg.content.count('!')
             self.proportions["media"][msg.sender] += (
@@ -239,3 +239,24 @@ class ChatFeatures():
         if (self.initiations[root] == 0):
             return 1/self.initiations[root] 
         return self.initiations[root] / self.initiations[contact]
+        
+    def generate_outcome(self, root, contact):
+        outcome = 99;
+        if (self.compute_root_initation_ratio(root, contact) > 0.867):
+            outcome = 0 #"just not that into you"
+            #print "DOESNT INITIATE"
+        elif (self.proportions["qmarks"]["ratio"] < 0.87):
+            outcome = 0 #"just not that into you"
+            #print "QUESTIONS FAIL"
+        else:
+            outcome = 1 #"definitely into you"
+            #print "ELSE"
+        return outcome    
+        
+        
+#        qMarksPerRoot = qmarksRoot/messagesRoot
+ #       qMarksPerContact = qmarksContact/messagesContact
+        
+        
+        
+        
