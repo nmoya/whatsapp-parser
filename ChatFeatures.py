@@ -255,20 +255,34 @@ class ChatFeatures():
             return 1/self.initiations[contact] 
         return self.initiations[root] / self.initiations[contact]
         
-    def generate_outcome(self, root, contact):
+    def generate_outcome(self, root, contact, methodology):
         outcome = 99;
-        if (self.compute_root_initation_ratio(root, contact) > 0.867):
-            outcome = 0 #"just not that into you"
-            #print "DOESNT INITIATE"
-        elif (self.proportions["qmarks"]["ratio"] < 0.87):
-            outcome = 0 #"just not that into you"
-            #print "QUESTIONS FAIL"
+        if methodology == 0:
+            if (self.compute_root_initation_ratio(root, contact) > 0.867):
+                outcome = 0 #"just not that into you"
+                #print "DOESNT INITIATE"
+            elif (self.proportions["qmarks"]["ratio"] > 0.87): #flipped the non-intutitive direction of inequality
+                outcome = 0 #"just not that into you"
+                #print "QUESTIONS FAIL"
+            else:
+                outcome = 1 #"definitely into you"
+                #print "ELSE" 
+        elif methodology == 1:
+            if (self.compute_root_initation_ratio(root, contact) > 0.83):
+                outcome = 0 #"just not that into you"
+                #print "DOESNT INITIATE"
+            elif (self.features.compute_avg_root_response_time() < 0.92): #flipped non-intuitive direction of inequality
+                outcome = 0 #"just not that into you"
+                #print "QUESTIONS FAIL"
+            else:
+                outcome = 1 #"definitely into you"
+                #print "ELSE"
+
         else:
-            outcome = 1 #"definitely into you"
-            #print "ELSE"
-        return outcome    
-        
-        
+            outcome = 99;
+
+        return outcome         
+                        
 #        qMarksPerRoot = qmarksRoot/messagesRoot
  #       qMarksPerContact = qmarksContact/messagesContact
         

@@ -188,7 +188,7 @@ class Chat():
         output["patterns"] = self.features.patterns
         output["senders"] = self.senders
         output["muw"] = self.features.most_used_words
-        output["outcome"] = self.features.generate_outcome(self.root, self.get_contact())
+        output["outcome"] = self.features.generate_outcome(self.root, self.get_contact(), 0) #TODO: make macros for outcome methodology 
         if output_name.endswith(".json"):
             arq = open(output_name, "w")
         else:
