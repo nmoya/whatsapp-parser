@@ -22,12 +22,12 @@ A Whatsapp chat history file and an optional list of regular expression patterns
 - Open your terminal and execute:
 
 ```
-python main.py TextFileNameHere.txt [regex. patterns]
+python chat.py -f chat.txt -p WhatsApp -n "Nikolas Moya" -r [regex. patterns]
 ```
 
 ### Example ###
 ```
-python main.py Chat.txt sleepy yes
+python chat.py -f chat.txt -p WhatsApp -n "Nikolas Moya" -r sleepy yes
 ```
 
 - Expected output:
