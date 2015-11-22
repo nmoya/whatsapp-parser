@@ -37,9 +37,9 @@ class ParserWhatsapp():
                     msg_date, "%m/%d/%y, %I:%M:%S %p")
             else:
                 if len(year) == 2:
-                    datetime_obj = datetime.strptime(msg_date, "%d/%m/%y %H:%M:%S")
+                    datetime_obj = datetime.strptime(msg_date, "%m/%d/%y %H:%M:%S")
                 else:
-                    datetime_obj = datetime.strptime(msg_date, "%d/%m/%Y %H:%M:%S")
+                    datetime_obj = datetime.strptime(msg_date, "%m/%d/%Y %H:%M:%S")
 
             set_of_senders.add(sender)
             list_of_messages.append(message.Message(sender, content, raw_date, time, datetime_obj))

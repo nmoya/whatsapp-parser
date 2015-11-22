@@ -34,7 +34,7 @@ class ChatFeatures():
             dt = t1 - t0
             dt.total_seconds()
 
-            print "sender %s delta %s" % ( message.sender, dt.total_seconds() )
+            # print "sender %s delta %s" % ( message.sender, dt.total_seconds() )
             if (dt.total_seconds() > initiation_thrs):
                 self.initiations[message.sender] += 1
 

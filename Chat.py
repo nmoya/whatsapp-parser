@@ -28,14 +28,14 @@ def pretty_print(dic, parent, depth):
 
 class Chat():
 
-    def __init__(self, filename, root=None, platform="Facebook"):
+    def __init__(self, filename, platform="WhatsApp"):
         self.filename     = filename
         self.platform     = platform
         self.raw_messages = []
         self.messages     = []     # List of Messages objects
         self.features     = ChatFeatures() # Chat Features object
         self.senders      = []
-        self.root         = root
+        self.root         = ''
 
         if platform == "WhatsApp":
             self.open_file = self.open_file_whatsapp
@@ -67,6 +67,9 @@ class Chat():
         elif self.platform == "Facebook":
             p = facebook.ParserFacebook(self.raw_messages)
             self.senders, self.messages = p.parse()
+
+    def set_root(self, root):
+        self.root = root
 
     def get_contact(self):
         return list(set(self.senders).difference(set(self.root)))[0]
@@ -203,17 +206,22 @@ class Chat():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chatlog Feature Extractor')
     parser.add_argument('-f', '--file', help='Chatlog file', required=True)
-    parser.add_argument('-n', '--root', help='Root name', required=True)
-    parser.add_argument('-p', '--platform', help='Platform', choices=["WhatsApp", "Facebook"], required=True)
+    parser.add_argument('-n', '--root', help='Root name', required=False)
+    parser.add_argument('-p', '--platform', help='Platform', choices=["WhatsApp", "Facebook"], default="WhatsApp", required=False)
     parser.add_argument('-r', '--regexes', help='Regex patterns to compute frequency', nargs="+", required=False, default=[])
     parser.add_argument('-o', '--output', help='JSON output file name', required=False, default="./logs/basic_stats.json")
 
     args = vars(parser.parse_args())
 
-    args["root"] = args["root"].replace("_", " ")
-    c = Chat(args["file"], args["root"], args["platform"])
+    c = Chat(args["file"], args["platform"])
     c.open_file()
     c.parse_messages()
+    if args.get("root") is None:
+        for i, s in enumerate(c.senders):
+            print str(i), s
+        c.set_root(c.senders[int(raw_input("Please choose one person to be the root: "))])
+    else:
+        c.set_root(args["root"])
     c.all_features()
     c.print_features()
     c.save_features(args["output"])
