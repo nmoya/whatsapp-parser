@@ -156,7 +156,7 @@ class Chat():
                 self.features.most_used_words.remove(muw)
 
     def save_features(self, output_name):
-        import pprint
+        import pprint, os
         output = {}
         output["root"] = self.root
         output["avg_response_time"] = {}
@@ -192,16 +192,22 @@ class Chat():
         output["senders"] = self.senders
         output["muw"] = self.features.most_used_words
         output["outcome"] = self.features.generate_outcome(self.root, self.get_contact(), 0) #TODO: make macros for outcome methodology 
-        if output_name.endswith(".json"):
-            arq = open(output_name, "w")
-        else:
-            arq = open(output_name+".json", "w")
-        arq.write(json.dumps(output))
-        pprint.pprint(output)
-        arq.close()
-
-
-
+        # if fallback to default path, make sure the hardcoded folder `log` is present in the folder
+        if output_name == "./logs/basic_stats.json":
+            if not os.path.exists('logs'):
+                os.makedirs('logs')
+        try:
+            if output_name.endswith(".json"):
+                arq = open(output_name, "w")
+            else:
+                arq = open(output_name+".json", "w")
+            arq.write(json.dumps(output))
+            pprint.pprint(output)
+            arq.close()
+        # In case path (directory) mentioned by the user doesn't exist
+        except IOError:
+            print "\nI/O Error: Following path doesn't exist:", output_name, "\n"
+            exit(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chatlog Feature Extractor')
