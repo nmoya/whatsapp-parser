@@ -103,7 +103,7 @@ class Chat():
         word_length_threshold = kargs.get("word_length_threshold", 3)
 
         self.features.compute_response_time_and_burst(self.messages, self.root, self.senders, initiation_thrs, burst_thrs, response_thrs)
-        self.features.compute_messages_per_weekday(self.messages)
+        self.features.compute_messages_per_weekday(self.messages) 
         self.features.compute_messages_per_shift(self.messages)
         self.features.compute_messages_pattern(self.messages, self.senders, pattern_list)
         self.features.compute_message_proportions(self.messages, self.senders, self.root, self.get_contact())

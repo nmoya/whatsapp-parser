@@ -74,7 +74,12 @@ def date_to_weekday(date_str):
         day, month, year = date_str.split("/")
         parsed_date = "%s-%s-%s" % (year, month, day)
         date_str = parsed_date
-    return time.strftime("%A", time.strptime(date_str, "%Y-%d-%m"))
+
+    # if year format is: 2012, 2000
+    if len(year) == 4:
+        return time.strftime("%A", time.strptime(date_str, "%Y-%d-%m"))
+    # if year format is: 12, 00 
+    return time.strftime("%A", time.strptime(date_str, "%y-%d-%m"))
 
 
 def date_interval(initial_date, length, step=1, separator="-"):

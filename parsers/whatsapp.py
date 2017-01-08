@@ -19,9 +19,6 @@ class ParserWhatsapp():
             msg_date, sep, msg = l.partition(": ")
             raw_date, sep, time = msg_date.partition(" ")
             sender, sep, content = msg.partition(": ")
-            # This ignores a minority of bad formatted lines.
-            if len(raw_date) != 10 or len(time) != 8:
-                continue
             raw_date = raw_date.replace(",", "")
             year = raw_date.split(" ")[0].split("/")[-1]
             # The following lines treats:
@@ -32,15 +29,20 @@ class ParserWhatsapp():
             # colonIndex = [x.start() for x in re.finditer(':', l)]
             # print l, colonIndex
             # chatTimeString = l[0:colonIndex[2]]
-            if "AM" in msg_date or "PM" in msg_date:
-                datetime_obj = datetime.strptime(
-                    msg_date, "%m/%d/%y, %I:%M:%S %p")
-            else:
-                if len(year) == 2:
-                    datetime_obj = datetime.strptime(msg_date, "%m/%d/%y %H:%M:%S")
+            # This ignores a minority of bad formatted lines using try/except block. 
+            # an execption is raised when the datetime_obj is not created due to date parsing error
+            try:
+                if "AM" in msg_date or "PM" in msg_date:
+                    datetime_obj = datetime.strptime(
+                        msg_date, "%m/%d/%y, %I:%M:%S %p")
                 else:
-                    datetime_obj = datetime.strptime(msg_date, "%m/%d/%Y %H:%M:%S")
-
+                    if len(year) == 2:
+                        datetime_obj = datetime.strptime(msg_date, "%m/%d/%y %H:%M:%S")
+                    else:
+                        datetime_obj = datetime.strptime(msg_date, "%m/%d/%Y %H:%M:%S")
+            except ValueError: 
+                continue
+                
             set_of_senders.add(sender)
             list_of_messages.append(message.Message(sender, content, raw_date, time, datetime_obj))
 
