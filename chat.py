@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+
+from parsers import whatsapp, facebook
+from ChatFeatures import ChatFeatures
+
+
 from datetime import datetime
 import codecs
 import operator
@@ -7,9 +12,7 @@ import sys
 import json
 import csv
 import argparse
-from parsers import whatsapp
-from parsers import facebook
-from ChatFeatures import ChatFeatures
+import os 
 
 
 def pretty_print(dic, parent, depth):
@@ -156,7 +159,6 @@ class Chat():
                 self.features.most_used_words.remove(muw)
 
     def save_features(self, output_name):
-        import pprint, os
         output = {}
         output["root"] = self.root
         output["avg_response_time"] = {}
@@ -201,8 +203,7 @@ class Chat():
                 arq = open(output_name, "w")
             else:
                 arq = open(output_name+".json", "w")
-            arq.write(json.dumps(output))
-            pprint.pprint(output)
+            arq.write(json.dumps(output, indent=4, sort_keys=True))
             arq.close()
         # In case path (directory) mentioned by the user doesn't exist
         except IOError:
