@@ -9,7 +9,7 @@ except (IOError, ImportError):
     import codecs
     long_description = codecs.open('README.rst', 'r', encoding='utf-8').read()
 
-version = '1.0.0'
+version = '1.0.2'
 
 setup(
     name='whatsapp-parser',
@@ -24,7 +24,7 @@ setup(
     long_description=long_description,
     entry_points={
         'console_scripts': [
-            'wp_parser=wp_parser.chat:main',
+            'wp_parser=wp_parser.wp_chat:main',
         ],
     },
     classifiers=[

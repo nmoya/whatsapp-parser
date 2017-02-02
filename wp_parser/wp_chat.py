@@ -1,4 +1,6 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 from __future__ import division
 
 from parsers import whatsapp, facebook
@@ -210,7 +212,7 @@ class Chat():
             print "\nI/O Error: Following path doesn't exist:", output_name, "\n"
             exit(1)
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Chatlog Feature Extractor')
     parser.add_argument('-f', '--file', help='Chatlog file', required=True)
     parser.add_argument('-n', '--root', help='Root name', required=False)
@@ -232,3 +234,7 @@ if __name__ == "__main__":
     c.all_features()
     c.print_features()
     c.save_features(args["output"])
+
+if __name__ == "__main__":
+    main()
+    
