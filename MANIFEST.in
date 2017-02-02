@@ -1,0 +1,4 @@
+include *.in
+include *.md
+include *.rst
+include LICENSE
