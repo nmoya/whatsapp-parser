@@ -12,7 +12,7 @@ except (IOError, ImportError):
 version = '1.0.0'
 
 setup(
-    name='whatsapp parser',
+    name='whatsapp-parser',
     version=version,
     author='Nikolas Moya',
     author_email='nikolasmoya@gmail.com',
@@ -35,7 +35,7 @@ setup(
         'Intended Audience :: End Users/Desktop',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7 :: Only',
+        'Programming Language :: Python :: 2 :: Only',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
