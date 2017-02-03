@@ -1,0 +1,78 @@
+Root: UsernameTwo
+
+Average root response time (s): 90.00
+Average contact response time (s): 240.00
+Ratio: 0.38
+
+Number of contact bursts: 0
+Average burst length: 0.00f
+Ratio: 1.00
+
+Root initiations: 1
+Contact initiations: 0
+Root initiation ratio: 1.00
+
+Proportions:
+   avg_words
+     ratio -> 1.0
+     UsernameOne -> 2.75
+     UsernameTwo -> 4.4
+   media
+     UsernameOne -> 0
+     total -> 1
+     ratio -> 1.0
+     UsernameTwo -> 1
+   exclams
+     UsernameOne -> 0
+     ratio -> 1.0
+     total -> 3
+     UsernameTwo -> 3
+   qmarks
+     ratio -> 1.0
+     UsernameTwo -> 1
+     total -> 4
+     UsernameOne -> 4
+   messages
+     ratio -> 1.0
+     UsernameOne -> 4
+     UsernameTwo -> 5
+     total -> 9
+   words
+     ratio -> 1.0
+     UsernameOne -> 11
+     UsernameTwo -> 22
+     total -> 33
+   chars
+     ratio -> 1.0
+     UsernameOne -> 66
+     UsernameTwo -> 125
+     total -> 191
+
+Weekdays:
+ Tuesday -> 0
+ Friday -> 0
+ Thursday -> 0
+ Sunday -> 0
+ Saturday -> 0
+ Monday -> 1
+ Wednesday -> 8
+
+Shifts:
+ evening -> 0
+ latenight -> 0
+ morning -> 1
+ afternoon -> 8
+
+Patterns:
+
+Most used words:
+test
+with
+messg
+burst
+response
+time
+hello,
+media
+exclam!!!
+<media
