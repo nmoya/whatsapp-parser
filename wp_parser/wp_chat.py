@@ -231,7 +231,7 @@ def main():
         c.set_root(c.senders[int(raw_input("Please choose one person to be the root: "))])
     else:
         c.set_root(args["root"])
-    c.all_features()
+    c.all_features(pattern_list=args['regexes'])
     c.print_features()
     c.save_features(args["output"])
 
