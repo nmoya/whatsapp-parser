@@ -13,7 +13,7 @@ A Whatsapp chat history file and an optional list of regular expression patterns
 ### Output ##
 
 - Several statistics about the chat history and the frequency of each pattern.
-- A JSON file is created inside /logs/ folder.
+- A JSON file is created inside /logs/ folder
 
 ### Usage Steps ####
 - Export your Whatsapp chat history. (http://www.whatsapp.com/faq/general/23753886)
